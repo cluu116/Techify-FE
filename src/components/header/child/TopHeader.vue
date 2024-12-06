@@ -1,22 +1,42 @@
 <script setup>
-import {onMounted, ref} from "vue";
+import {computed, onMounted, ref, watch} from "vue";
 import {Dialog} from "primevue";
 import AccountForm from "@/components/account/AccountForm.vue";
-import api from "@/services/ApiService.js";
 import MobileSidebar from "@/components/header/child/MobileSidebar.vue";
+import {getCart} from '@/services/CartService';
+import {authService} from "@/services/AuthService.js";
+import router from "@/router/router.js";
 
 const sidebarVisible = ref(false);
 const user = ref(null);
-onMounted(async () => {
-  try {
-    user.value = (await api.get("auth")).data;
-  } catch (e) {
-  }
+
+const cartItemCount = computed(() => {
+  const cart = getCart().value;
+  return cart.reduce((total, item) => total + item.quantity, 0);
 });
-const logout = () => {
-  localStorage.removeItem("token");
-  localStorage.removeItem("refreshToken");
-  window.location.reload();
+const fetchUserData = async () => {
+  if (authService.isAuthenticated) {
+    try {
+      const userInfo = await authService.getUserInfo();
+      user.value = userInfo;
+    } catch (e) {
+      console.error('Error fetching user data:', e);
+    }
+  }
+};
+
+onMounted(() => {
+  fetchUserData();
+});
+
+const logout = async () => {
+  try {
+    await authService.logout();
+    user.value = null;
+    await router.push('/');
+  } catch (error) {
+    console.error('Error during logout:', error);
+  }
 };
 
 const visible = ref(false);
@@ -220,7 +240,7 @@ const visible = ref(false);
                       >
                         <span
                             class="bb-btn-title font-Poppins transition-all duration-[0.3s] ease-in-out text-[12px] leading-[1] text-[#3d4750] mb-[4px] tracking-[0.6px] capitalize font-medium whitespace-nowrap"
-                        ><b class="bb-cart-count">4</b> sản phẩm</span
+                        ><b class="bb-cart-count">{{ cartItemCount }}</b> sản phẩm</span
                         >
                         <span
                             class="bb-btn-stitle font-Poppins transition-all duration-[0.3s] ease-in-out text-[14px] leading-[16px] font-semibold text-[#3d4750] tracking-[0.03rem] whitespace-nowrap"

@@ -214,9 +214,7 @@ onMounted(() => {
                         >
                       </span>
                       <router-link :to="`/product/${product.id}`">
-                        <div
-                            class="inner-img relative block overflow-hidden pointer-events-none rounded-t-[20px]"
-                        >
+                        <div class="inner-img relative block overflow-hidden pointer-events-none rounded-t-[20px]">
                           <img
                               class="main-img transition-all duration-[0.3s] ease-in-out w-full"
                               :src="getImageUrl(product.thumbnail)"
@@ -229,25 +227,21 @@ onMounted(() => {
                       <div
                           class="bb-pro-subtitle mb-[8px] flex flex-wrap justify-between"
                       >
-                        <a
-                            href="shop-left-sidebar-col-3.html"
+                        <router-link
+                            :to="`/category/${product.category.id}/products`"
                             class="transition-all duration-[0.3s] ease-in-out font-Poppins text-[13px] leading-[16px] text-[#777] font-light tracking-[0.03rem]"
-                        >Spices</a
                         >
+                          {{ product.category.name }}
+                        </router-link>
                         <span class="bb-pro-rating">
                           <i
+                              v-for="i in product.avgRating"
+                              :key="i"
                               class="ri-star-fill float-left text-[15px] mr-[3px] leading-[18px] text-[#fea99a]"
                           ></i>
                           <i
-                              class="ri-star-fill float-left text-[15px] mr-[3px] leading-[18px] text-[#fea99a]"
-                          ></i>
-                          <i
-                              class="ri-star-fill float-left text-[15px] mr-[3px] leading-[18px] text-[#fea99a]"
-                          ></i>
-                          <i
-                              class="ri-star-fill float-left text-[15px] mr-[3px] leading-[18px] text-[#fea99a]"
-                          ></i>
-                          <i
+                              v-for="i in 5 - product.avgRating"
+                              :key="'empty' + i"
                               class="ri-star-line float-left text-[15px] mr-[3px] leading-[18px] text-[#777]"
                           ></i>
                         </span>
@@ -256,10 +250,11 @@ onMounted(() => {
                           class="bb-pro-title mb-[8px] text-[16px] leading-[18px]"
                       >
                         <router-link
+                            :to="`/product/${product.id}`"
                             class="transition-all duration-[0.3s] ease-in-out font-quicksand w-full block whitespace-nowrap overflow-hidden text-ellipsis text-[15px] leading-[18px] text-[#3d4750] font-semibold tracking-[0.03rem]"
-                        >Black Pepper Spice pack
-                        </router-link
                         >
+                          {{ product.name }}
+                        </router-link>
                       </h4>
                       <div class="bb-price flex flex-wrap justify-between">
                         <div class="inner-price mx-[-3px]">
@@ -338,17 +333,15 @@ onMounted(() => {
                         >Hot</span
                         >
                       </span>
-                      <a href="javascript:void(0)">
-                        <div
-                            class="inner-img relative block overflow-hidden pointer-events-none rounded-t-[20px]"
-                        >
+                      <router-link :to="`/product/${product.id}`">
+                        <div class="inner-img relative block overflow-hidden pointer-events-none rounded-t-[20px]">
                           <img
                               class="main-img transition-all duration-[0.3s] ease-in-out w-full"
                               :src="getImageUrl(product.thumbnail)"
                               :alt="product.name"
                           />
                         </div>
-                      </a>
+                      </router-link>
                       <ul
                           class="bb-pro-actions transition-all duration-[0.3s] ease-in-out my-[0] mx-[auto] absolute z-[9] left-[0] right-[0] bottom-[0] flex flex-row items-center justify-center opacity-[0]"
                       >
@@ -370,11 +363,12 @@ onMounted(() => {
                       <div
                           class="bb-pro-subtitle mb-[8px] flex flex-wrap justify-between"
                       >
-                        <a
-                            href="javascript:void(0)"
+                        <router-link
+                            :to="`/category/${product.category.id}/products`"
                             class="transition-all duration-[0.3s] ease-in-out font-Poppins text-[13px] leading-[16px] text-[#777] font-light tracking-[0.03rem]"
-                        >{{ product.category }}</a
                         >
+                          {{ product.category.name }}
+                        </router-link>
                         <span class="bb-pro-rating">
                           <i
                               v-for="i in product.avgRating"
@@ -391,11 +385,12 @@ onMounted(() => {
                       <h4
                           class="bb-pro-title mb-[8px] text-[16px] leading-[18px]"
                       >
-                        <a
-                            href="javascript:void(0)"
+                        <router-link
+                            :to="`/product/${product.id}`"
                             class="transition-all duration-[0.3s] ease-in-out font-quicksand w-full block whitespace-nowrap overflow-hidden text-ellipsis text-[15px] leading-[18px] text-[#3d4750] font-semibold tracking-[0.03rem]"
-                        >{{ product.name }}</a
                         >
+                          {{ product.name }}
+                        </router-link>
                       </h4>
                       <div class="bb-price flex flex-wrap justify-between">
                         <div class="inner-price mx-[-3px]">
@@ -472,17 +467,15 @@ onMounted(() => {
                         >New</span
                         >
                       </span>
-                      <a href="javascript:void(0)">
-                        <div
-                            class="inner-img relative block overflow-hidden pointer-events-none rounded-t-[20px]"
-                        >
+                      <router-link :to="`/product/${product.id}`">
+                        <div class="inner-img relative block overflow-hidden pointer-events-none rounded-t-[20px]">
                           <img
                               class="main-img transition-all duration-[0.3s] ease-in-out w-full"
                               :src="getImageUrl(product.thumbnail)"
                               :alt="product.name"
                           />
                         </div>
-                      </a>
+                      </router-link>
                       <ul
                           class="bb-pro-actions transition-all duration-[0.3s] ease-in-out my-[0] mx-[auto] absolute z-[9] left-[0] right-[0] bottom-[0] flex flex-row items-center justify-center opacity-[0]"
                       >
@@ -504,11 +497,12 @@ onMounted(() => {
                       <div
                           class="bb-pro-subtitle mb-[8px] flex flex-wrap justify-between"
                       >
-                        <a
-                            href="javascript:void(0)"
+                        <router-link
+                            :to="`/category/${product.category.id}/products`"
                             class="transition-all duration-[0.3s] ease-in-out font-Poppins text-[13px] leading-[16px] text-[#777] font-light tracking-[0.03rem]"
-                        >{{ product.category }}</a
                         >
+                          {{ product.category.name }}
+                        </router-link>
                         <span class="bb-pro-rating">
                           <i
                               v-for="i in product.avgRating"
@@ -525,11 +519,12 @@ onMounted(() => {
                       <h4
                           class="bb-pro-title mb-[8px] text-[16px] leading-[18px]"
                       >
-                        <a
-                            href="javascript:void(0)"
+                        <router-link
+                            :to="`/product/${product.id}`"
                             class="transition-all duration-[0.3s] ease-in-out font-quicksand w-full block whitespace-nowrap overflow-hidden text-ellipsis text-[15px] leading-[18px] text-[#3d4750] font-semibold tracking-[0.03rem]"
-                        >{{ product.name }}</a
                         >
+                          {{ product.name }}
+                        </router-link>
                       </h4>
                       <div class="bb-price flex flex-wrap justify-between">
                         <div class="inner-price mx-[-3px]">

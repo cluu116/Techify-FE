@@ -1,9 +1,12 @@
- import {createRouter, createWebHistory} from "vue-router";
+import {createRouter, createWebHistory} from "vue-router";
 import HomeView from "@/views/HomeView.vue";
 import CartView from "@/views/CartView.vue";
 import ProductByCategoryView from "@/views/ProductByCategoryView.vue";
 import CheckoutView from "@/views/CheckoutView.vue";
 import ProductDetailView from "@/views/ProductDetailView.vue";
+import GoogleAuthCallback from "@/components/account/GoogleAuthCallback.vue";
+import FacebookAuthCallback from "@/components/account/FacebookAuthCallback.vue";
+
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
@@ -88,8 +91,25 @@ const router = createRouter({
             path: "/product/:id",
             name: "Chi Tiết Sản Phẩm",
             component: ProductDetailView,
+        },
+        {
+            path: "/google-auth-callback",
+            name: "GoogleAuthCallback",
+            component: GoogleAuthCallback,
+        },
+        {
+            path: "/facebook-auth-callback",
+            name: "FacebookAuthCallback",
+            component: FacebookAuthCallback,
         }
     ],
+    scrollBehavior(to, from, savedPosition) {
+        if (savedPosition) {
+            return savedPosition
+        } else {
+            return {top: 0}
+        }
+    }
 });
 
 export default router;

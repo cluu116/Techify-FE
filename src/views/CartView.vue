@@ -18,15 +18,48 @@ const cartItems = ref([]);
 const products = ref([]);
 // Get cart data with product details
 const loadCartData = async () => {
-  cartItems.value = getCart().value;
-  if (cartItems.value.length === 0) {
-    products.value = null;
-    return;
-  }
-  products.value = [];
-  for (const item of cartItems.value) {
-    const res = await api.get(`product/${item.productId}`);
-    products.value.push(res.data);
+  try {
+    cartItems.value = getCart().value;
+    if (cartItems.value.length === 0) {
+      products.value = [];
+      return;
+    }
+
+    products.value = [];
+    const productPromises = cartItems.value.map(async (item) => {
+      try {
+        const res = await api.get(`product/${item.productId}`);
+        return res.data;
+      } catch (error) {
+        console.error(`Error fetching product ${item.productId}:`, error);
+        toast.add({
+          severity: "warn",
+          summary: "Sản phẩm không tồn tại",
+          detail: `Sản phẩm với ID ${item.productId} đã bị xóa khỏi giỏ hàng.`,
+          life: 3000,
+        });
+        // Remove the non-existent product from the cart
+        removeFromCart(item.productId);
+        return null;
+      }
+    });
+
+    const fetchedProducts = await Promise.all(productPromises);
+    products.value = fetchedProducts.filter(product => product !== null);
+
+    // Update cart items to match fetched products
+    cartItems.value = cartItems.value.filter(item =>
+        products.value.some(product => product.id === item.productId)
+    );
+
+  } catch (error) {
+    console.error("Error loading cart data:", error);
+    toast.add({
+      severity: "error",
+      summary: "Lỗi",
+      detail: "Không thể tải dữ liệu giỏ hàng. Vui lòng thử lại sau.",
+      life: 3000,
+    });
   }
 };
 

@@ -3,9 +3,11 @@ import {ref} from "vue";
 import api, {generateFormData, resetForm} from "@/services/ApiService.js";
 import {showError, showSuccess} from "@/services/ToastService.js";
 import {useToast} from "primevue";
+import {authService} from "@/services/AuthService.js";
 
 const toast = useToast();
 const formState = ref("login");
+
 const registerAccount = async () => {
   const formData = generateFormData("accountForm");
   const res = await api.post("auth/register", formData);
@@ -38,6 +40,20 @@ const handleSubmit = () => {
     registerAccount();
   }
 }
+const loginWithGoogle = async () => {
+  try {
+    await authService.initiateGoogleLogin();
+  } catch (error) {
+    showError(toast, "Lỗi khi bắt đầu đăng nhập Google");
+  }
+};
+const loginWithFacebook = async () => {
+  try {
+    await authService.initiateFacebookLogin();
+  } catch (error) {
+    showError(toast, "Lỗi khi bắt đầu đăng nhập Facebook");
+  }
+};
 </script>
 
 <template>
@@ -105,6 +121,22 @@ const handleSubmit = () => {
         {{ formState === 'login' ? 'Đăng ký ' : 'Đăng nhập' }}
       </button
       >
+    </div>
+    <div class="mt-4">
+      <button
+          @click.prevent="loginWithGoogle"
+          class="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+      >
+        Đăng nhập với Google
+      </button>
+    </div>
+    <div class="mt-4">
+      <button
+          @click.prevent="loginWithFacebook"
+          class="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-500 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+      >
+        Đăng nhập với Facebook
+      </button>
     </div>
   </form>
 </template>
