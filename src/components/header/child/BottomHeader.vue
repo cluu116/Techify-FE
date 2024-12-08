@@ -140,7 +140,7 @@ onMounted(async () => {
                 <div
                     class="custom-select transition-all duration-[0.3s] ease-in-out w-full h-full pr-[15px] text-[#777] flex items-center justify-between text-[14px] relative"
                 >
-                  <p>0987654321</p>
+                  <p>0867110604</p>
                 </div>
               </div>
             </div>

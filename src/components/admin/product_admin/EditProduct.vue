@@ -108,7 +108,7 @@ const updateProduct = async () => {
 
     await api.put(`product/${formData.value.id}`, payload);
     showSuccess(toast, "Cập nhật sản phẩm thành công");
-    router.push("/admin/product");
+    await router.push("/admin/product");
   } catch (error) {
     showError(toast, "Cập nhật sản phẩm thất bại");
   }

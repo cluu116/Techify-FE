@@ -11,6 +11,7 @@ import {
   getOrderStatusSeverity,
   calculateFinalTotal,
 } from "@/utils/formatters.js";
+import getImageUrl from "@/utils/ImageUtils.js";
 
 const route = useRoute();
 const router = useRouter();
@@ -183,8 +184,8 @@ onMounted(getOrderDetail);
               <template #body="slotProps">
                 <div class="flex align-items-center gap-3">
                   <img
-                    :src="slotProps.data.productThumbnail"
-                    class="w-4rem h-4rem shadow-2 border-round"
+                    class="product-thumbnail w-4rem h-4rem shadow-2 border-round"
+                    :src="getImageUrl(slotProps.data.productThumbnail)"
                   />
                   <div>
                     <div class="font-medium mb-1">
@@ -241,7 +242,11 @@ onMounted(getOrderDetail);
     padding: 1.25rem;
   }
 }
-
+.product-thumbnail {
+  width: 64px;
+  height: 64px;
+  border-radius: 10px;
+}
 :deep(.p-tag) {
   font-weight: 600;
 }

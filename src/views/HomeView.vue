@@ -27,13 +27,12 @@ const updateCountdown = () => {
     return;
   }
 
-  const hours = Math.floor(
-      (distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
-  );
+  const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
   const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
   const seconds = Math.floor((distance % (1000 * 60)) / 1000);
 
-  countdown.value = `${hours.toString().padStart(2, "0")}:${minutes
+  countdown.value = `${days} Ngày ${hours.toString().padStart(2, "0")}:${minutes
       .toString()
       .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`;
 };
@@ -396,12 +395,12 @@ onMounted(() => {
                         <div class="inner-price mx-[-3px]">
                           <span
                               class="new-price px-[3px] text-[16px] text-[#686e7d] font-bold"
-                          >${{ product.promotionPrice }}</span
+                          >{{ product.promotionPrice }} VND</span
                           >
                           <span
                               v-if="product.promotionPrice < product.sellPrice"
                               class="old-price px-[3px] text-[14px] text-[#686e7d] line-through"
-                          >${{ product.sellPrice }}</span
+                          >${{ product.sellPrice }} VND</span
                           >
                         </div>
                       </div>
@@ -827,7 +826,7 @@ onMounted(() => {
 
 /* Add discount badge */
 .old-price::after {
-  content: "-" attr(data-discount) "%";
+  content: "-" attr(data-discount);
   position: absolute;
   top: -15px;
   right: -20px;

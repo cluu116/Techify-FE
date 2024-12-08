@@ -68,7 +68,7 @@ onMounted(getProducts);
           </div>
         </template>
       </Column>
-      <Column field="category" header="Loại Sản Phẩm"></Column>
+      <Column field="category.name" header="Loại Sản Phẩm"></Column>
       <Column field="sellPrice" header="Giá Bán">
         <template #body="slotProps">
           {{ slotProps.data.sellPrice.toLocaleString()}}
