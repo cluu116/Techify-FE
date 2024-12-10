@@ -8,6 +8,11 @@ const toast = useToast();
 const fileInput = ref(null)
 const images = ref([])
 
+const stripHtml = (html) => {
+  let tmp = document.createElement("DIV");
+  tmp.innerHTML = html;
+  return tmp.textContent || tmp.innerText || "";
+}
 // Hàm mở input file
 const triggerFileInput = () => {
   fileInput.value.click()
@@ -42,6 +47,7 @@ const addProduct = async () => {
   const payload = generateFormData("form_add");
   payload.append('images', JSON.stringify(imageUrls.value));
   payload.append('colors', JSON.stringify(colors.value));
+  payload.append('sizes', JSON.stringify(sizes.value));
   payload.append('attributes', JSON.stringify(attributes.value));
   const thumbnail = payload.get('thumbnail');
   const thumbnailUrl = await api.post("upload", {image: thumbnail}, {
@@ -63,21 +69,42 @@ const addProduct = async () => {
     showError(toast, "Thêm Sản Phẩm Thất Bại, Hãy Thử Lại");
   }
 }
+
 let colors = ref([]);
-const uniqueColors = computed(() => {
-  return [...new Set(colors.value)];
-})
+const uniqueColors = computed(() => Array.from(new Set(colors.value)));
 const newColor = ref('');
+
 const addColor = () => {
   if (newColor.value.trim() !== '') {
     colors.value.push(newColor.value);
     newColor.value = '';
     console.log(colors.value)
   }
+  const trimmedColor = newColor.value.trim();
+  if (trimmedColor !== '' && !colors.value.includes(trimmedColor)) {
+    colors.value.push(trimmedColor);
+    newColor.value = '';
+  }
 }
-const removeColor = (index) => {
-  colors.value.splice(index, 0);
+const removeColor = (colorToRemove) => {
+  colors.value = colors.value.filter(color => color!== colorToRemove);
 }
+
+const sizes = ref([]);
+const uniqueSizes = computed(() => Array.from(new Set(sizes.value)));
+const newSize = ref('');
+
+const addSize = () => {
+  const trimmedSize = newSize.value.trim();
+  if (trimmedSize !== '' && !sizes.value.includes(trimmedSize)) {
+    sizes.value.push(trimmedSize);
+    newSize.value = '';
+  }
+};
+
+const removeSize = (sizeToRemove) => {
+  sizes.value = sizes.value.filter(size => size !== sizeToRemove);
+};
 const dialog = useDialog();
 const dialogVisible = ref(false);
 const attributes = ref({});
@@ -85,10 +112,11 @@ const attributeName = ref('');
 const attributeValue = ref('');
 const addAttribute = () => {
   if (attributeName.value.trim() === '') return;
-  if (attributeValue.value.includes('<img')) return;
+  const cleanValue = stripHtml(attributeValue.value).trim();
+  if (cleanValue === '') return;
   attributes.value = {
     ...attributes.value,
-    [attributeName.value]: attributeValue.value
+    [attributeName.value]: cleanValue
   }
   console.log(attributes.value)
   attributeName.value = '';
@@ -112,7 +140,8 @@ onMounted(async () => {
       <Step value="1">Thông Tin Chung</Step>
       <Step value="2">Hình Ảnh</Step>
       <Step value="3">Màu Sắc</Step>
-      <Step value="4">Thông Số</Step>
+      <Step value="4">Kích Thước</Step>
+      <Step value="5">Thông Số</Step>
     </StepList>
     <StepPanels>
       <StepPanel v-slot="{ activateCallback }" value="1">
@@ -182,6 +211,14 @@ onMounted(async () => {
                     </div>
 
                     <div class="space-y-2">
+                      <label class="text-gray-600 font-medium" for="inventoryQuantity">Số Lượng Tồn Kho</label>
+                      <input type="number" id="inventoryQuantity" min="1"
+                             name="inventoryQuantity"
+                             class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent transition"
+                             required aria-label="Stock Quantity"/>
+                    </div>
+
+                    <div class="space-y-2">
                       <label class="text-gray-600 font-medium" for="serial">Số Serial</label>
                       <input type="text" id="serial"
                              name="serial"
@@ -219,6 +256,17 @@ onMounted(async () => {
                              name="tax"
                              class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent transition"
                              required aria-label="Tax Rate"/>
+                    </div>
+                    <div class="space-y-2">
+                      <label class="text-gray-600 font-medium" for="status">Trạng Thái</label>
+                      <select id="status"
+                              name="status"
+                              class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent transition"
+                              required aria-label="Product Status">
+                        <option value="">Chọn Trạng Thái</option>
+                        <option value="active">Đang Hoạt Động</option>
+                        <option value="comingSoon">Sắp ra mắt</option>
+                      </select>
                     </div>
                   </div>
                   <div class="space-y-2">
@@ -286,30 +334,81 @@ onMounted(async () => {
               <div class="mb-4 flex justify-between gap-1">
                 <Toolbar>
                   <template #start>
-                    <input type="text"
-                           v-model="newColor"
-                           placeholder="Màu sắc"
-                           class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent transition"/>
+                    <input
+                        type="text"
+                        v-model="newColor"
+                        placeholder="Màu sắc"
+                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent transition"
+                        @keyup.enter="addColor"
+                    />
                   </template>
                   <template #end>
-                    <Button @click="addColor" label="Thêm Màu"/>
+                    <Button @click="addColor" label="Thêm Màu Sắc"/>
                   </template>
                 </Toolbar>
               </div>
               <div class="w-full">
-                <span v-for="(color, index) in uniqueColors" :key="index">
-                  <Chip :label="color" class="mr-2 mb-2" removable @remove="removeColor(index)"/>
-                </span>
+                <TransitionGroup name="list" tag="div">
+                  <Chip
+                      v-for="color in uniqueColors"
+                      :key="color"
+                      :label="color"
+                      class="mr-2 mb-2"
+                      removable
+                      @remove="removeColor(color)"
+                  />
+                </TransitionGroup>
               </div>
             </div>
           </div>
         </div>
         <div class="flex pt-6 justify-between">
           <Button label="Quay Lại" severity="secondary" icon="pi pi-arrow-left" @click="activateCallback('2')"/>
-          <Button label="TIếp Theo" icon="pi pi-arrow-right" iconPos="right" @click="activateCallback('4')"/>
+          <Button label="Tiếp Theo" icon="pi pi-arrow-right" iconPos="right" @click="activateCallback('4')"/>
         </div>
       </StepPanel>
       <StepPanel v-slot="{ activateCallback }" value="4">
+        <div class="flex flex-col h-full">
+          <div
+              class="p-8 border-2 border-dashed border-surface-200 flex-col flex justify-center items-center font-medium">
+            <div>
+              <div class="mb-4 flex justify-between gap-1">
+                <Toolbar>
+                  <template #start>
+                    <input
+                        type="text"
+                        v-model="newSize"
+                        placeholder="Kích thước"
+                        class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent transition"
+                        @keyup.enter="addSize"
+                    />
+                  </template>
+                  <template #end>
+                    <Button @click="addSize" label="Thêm Kích Thước"/>
+                  </template>
+                </Toolbar>
+              </div>
+              <div class="w-full">
+                <TransitionGroup name="list" tag="div">
+                  <Chip
+                      v-for="size in uniqueSizes"
+                      :key="size"
+                      :label="size"
+                      class="mr-2 mb-2"
+                      removable
+                      @remove="removeSize(size)"
+                  />
+                </TransitionGroup>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="flex pt-6 justify-between">
+          <Button label="Quay Lại" severity="secondary" icon="pi pi-arrow-left" @click="activateCallback('3')"/>
+          <Button label="Tiếp Theo" icon="pi pi-arrow-right" iconPos="right" @click="activateCallback('5')"/>
+        </div>
+      </StepPanel>
+      <StepPanel v-slot="{ activateCallback }" value="5">
         <div class="flex flex-col h-full">
           <div
               class="p-8 border-2 border-dashed border-surface-200 flex-auto flex flex-col justify-center items-center font-medium">
@@ -379,5 +478,14 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+.list-enter-active,
+.list-leave-active {
+  transition: all 0.5s ease;
+}
 
+.list-enter-from,
+.list-leave-to {
+  opacity: 0;
+  transform: translateX(30px);
+}
 </style>

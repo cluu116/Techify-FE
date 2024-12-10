@@ -1,41 +1,55 @@
 import { ref, computed } from "vue";
-import { showSuccess } from "./ToastService";
 
 const cartState = ref(JSON.parse(localStorage.getItem("cart")) || []);
 
-export function addToCart(productId, quantity = 1, toast, color = null) {
-    if (cartState.value.find((item) => item.productId === productId && item.color === color)) {
-        increaseQuantity(productId);
-        showSuccess(toast, "Đã tăng số lượng sản phẩm trong giỏ hàng");
-    } else {
-        cartState.value.push({productId, quantity, color});
-        updateLocalStorage();
-        showSuccess(toast, "Đã thêm vào giỏ hàng");
-    }
-}
+export function addToCart(productId, quantity = 1, toast, color = null, size = null) {
+    const existingItem = cartState.value.find((item) =>
+        item.productId === productId &&
+        item.color === color &&
+        (size === null || size === '' || item.size === size)
+    );
 
+    if (existingItem) {
+        existingItem.quantity += quantity;
+    } else {
+        cartState.value.push({productId, quantity, color, size});
+    }
+    updateLocalStorage();
+}
 export function getCart() {
     return computed(() => cartState.value);
 }
 
-export function removeFromCart(productId) {
-    cartState.value = cartState.value.filter((item) => item.productId !== productId);
+export function removeFromCart(productId, color, size) {
+    cartState.value = cartState.value.filter((item) =>
+        !(item.productId === productId &&
+            item.color === color &&
+            (size === null || size === '' || item.size === size))
+    );
     updateLocalStorage();
 }
 
-export function increaseQuantity(productId) {
-    const item = cartState.value.find((item) => item.productId === productId);
+export function increaseQuantity(productId, color, size) {
+    const item = cartState.value.find((item) =>
+        item.productId === productId &&
+        item.color === color &&
+        (size === null || size === '' || item.size === size)
+    );
     if (item) {
         item.quantity++;
         updateLocalStorage();
     }
 }
 
-export function decreaseQuantity(productId) {
-    const item = cartState.value.find((item) => item.productId === productId);
+export function decreaseQuantity(productId, color, size) {
+    const item = cartState.value.find((item) =>
+        item.productId === productId &&
+        item.color === color &&
+        (size === null || size === '' || item.size === size)
+    );
     if (item) {
         if (item.quantity === 1) {
-            removeFromCart(productId);
+            removeFromCart(productId, color, size);
         } else {
             item.quantity--;
             updateLocalStorage();

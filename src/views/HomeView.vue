@@ -3,6 +3,7 @@ import HeroSection from "@/components/hero/HeroSection.vue";
 import {onMounted, ref, computed} from "vue";
 import api from "@/services/ApiService.js";
 import CategoryCarousel from "@/components/category/CategoryCarousel.vue";
+import {formatCurrency} from "@/utils/formatters.js";
 
 const topSellingProducts = ref([]);
 const newProducts = ref([]);
@@ -221,6 +222,22 @@ onMounted(() => {
                           />
                         </div>
                       </router-link>
+                      <ul
+                          class="bb-pro-actions transition-all duration-[0.3s] ease-in-out my-[0] mx-[auto] absolute z-[9] left-[0] right-[0] bottom-[0] flex flex-row items-center justify-center opacity-[0]"
+                      >
+                        <li
+                            class="transition-all duration-[0.3s] ease-in-out w-[90%] h-[45px] mx-[2px] flex items-center justify-center"
+                        >
+                          <router-link
+                              :to="`/product/${product.id}`"
+                              title="Mua ngay"
+                              class="cart-btn w-full h-full flex items-center justify-center gap-2 rounded-[10px] font-semibold"
+                          >
+                            <i class="ri-shopping-cart-2-line text-lg"></i>
+                            <span>Mua ngay</span>
+                          </router-link>
+                        </li>
+                      </ul>
                     </div>
                     <div class="bb-pro-contact p-[20px]">
                       <div
@@ -259,16 +276,15 @@ onMounted(() => {
                         <div class="inner-price mx-[-3px]">
                           <span
                               class="new-price px-[3px] text-[16px] text-[#686e7d] font-bold"
-                          >$32</span
+                          >{{ formatCurrency(product.promotionPrice) }}</span
                           >
                           <span
-                              class="item-left px-[3px] text-[14px] text-[#6c7fd8]"
-                          >2 Left</span
+                              v-if="product.promotionPrice < product.sellPrice"
+                              class="old-price px-[3px] text-[14px] text-[#686e7d] line-through"
+                              :data-discount="`${product?.formattedDiscount}`"
+                          >${{ formatCurrency(product.sellPrice) }}</span
                           >
                         </div>
-                        <span class="last-items text-[14px] text-[#686e7d]"
-                        >1 pack</span
-                        >
                       </div>
                     </div>
                   </div>
@@ -345,16 +361,16 @@ onMounted(() => {
                           class="bb-pro-actions transition-all duration-[0.3s] ease-in-out my-[0] mx-[auto] absolute z-[9] left-[0] right-[0] bottom-[0] flex flex-row items-center justify-center opacity-[0]"
                       >
                         <li
-                            class="bb-btn-group transition-all duration-[0.3s] ease-in-out w-[90%] h-[45px] mx-[2px] flex items-center justify-center"
+                            class="transition-all duration-[0.3s] ease-in-out w-[90%] h-[45px] mx-[2px] flex items-center justify-center"
                         >
-                          <a
-                              href="javascript:void(0)"
-                              title="Thêm Vào Giỏ Hàng"
+                          <router-link
+                              :to="`/product/${product.id}`"
+                              title="Mua ngay"
                               class="cart-btn w-full h-full flex items-center justify-center gap-2 rounded-[10px] font-semibold"
                           >
                             <i class="ri-shopping-cart-2-line text-lg"></i>
-                            <span>Thêm Vào Giỏ Hàng</span>
-                          </a>
+                            <span>Mua ngay</span>
+                          </router-link>
                         </li>
                       </ul>
                     </div>
@@ -395,12 +411,13 @@ onMounted(() => {
                         <div class="inner-price mx-[-3px]">
                           <span
                               class="new-price px-[3px] text-[16px] text-[#686e7d] font-bold"
-                          >{{ product.promotionPrice }} VND</span
+                          >{{ formatCurrency(product.promotionPrice) }}</span
                           >
                           <span
                               v-if="product.promotionPrice < product.sellPrice"
                               class="old-price px-[3px] text-[14px] text-[#686e7d] line-through"
-                          >${{ product.sellPrice }} VND</span
+                              :data-discount="`${product?.formattedDiscount}`"
+                          >${{ formatCurrency(product.sellPrice) }}</span
                           >
                         </div>
                       </div>
@@ -479,16 +496,16 @@ onMounted(() => {
                           class="bb-pro-actions transition-all duration-[0.3s] ease-in-out my-[0] mx-[auto] absolute z-[9] left-[0] right-[0] bottom-[0] flex flex-row items-center justify-center opacity-[0]"
                       >
                         <li
-                            class="bb-btn-group transition-all duration-[0.3s] ease-in-out w-[90%] h-[45px] mx-[2px] flex items-center justify-center"
+                            class="transition-all duration-[0.3s] ease-in-out w-[90%] h-[45px] mx-[2px] flex items-center justify-center"
                         >
-                          <a
-                              href="javascript:void(0)"
-                              title="Thêm Vào Giỏ Hàng"
+                          <router-link
+                              :to="`/product/${product.id}`"
+                              title="Mua ngay"
                               class="cart-btn w-full h-full flex items-center justify-center gap-2 rounded-[10px] font-semibold"
                           >
                             <i class="ri-shopping-cart-2-line text-lg"></i>
-                            <span>Thêm Vào Giỏ Hàng</span>
-                          </a>
+                            <span>Mua ngay</span>
+                          </router-link>
                         </li>
                       </ul>
                     </div>
@@ -534,6 +551,7 @@ onMounted(() => {
                           <span
                               v-if="product.promotionPrice < product.sellPrice"
                               class="old-price px-[3px] text-[14px] text-[#686e7d] line-through"
+                              :data-discount="`${product?.formattedDiscount}`"
                           >${{ product.sellPrice }}</span
                           >
                         </div>
@@ -551,6 +569,12 @@ onMounted(() => {
 </template>
 
 <style>
+.cart-btn,
+.cart-btn:hover,
+.cart-btn:active,
+.cart-btn:focus {
+  border-radius: 10px !important;
+}
 /* Add new animations */
 @keyframes slideIn {
   from {

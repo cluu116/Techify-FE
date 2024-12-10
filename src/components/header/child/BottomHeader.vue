@@ -140,7 +140,7 @@ onMounted(async () => {
                 <div
                     class="custom-select transition-all duration-[0.3s] ease-in-out w-full h-full pr-[15px] text-[#777] flex items-center justify-between text-[14px] relative"
                 >
-                  <p>0867110604</p>
+                  <p><a href="tel:0867110604">+(84) 867110604</a></p>
                 </div>
               </div>
             </div>

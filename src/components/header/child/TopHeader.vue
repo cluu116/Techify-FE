@@ -183,7 +183,7 @@ const visible = ref(false);
                         >
                           <span
                               class="bb-btn-title font-Poppins transition-all duration-[0.3s] ease-in-out text-[12px] leading-[1] text-[#3d4750] mb-[4px] tracking-[0.6px] capitalize font-medium whitespace-nowrap"
-                          >Tài Khoản</span
+                          >{{ user ? "Xin chào" : "Tài khoản" }}</span
                           >
                           <span
                               class="bb-btn-stitle font-Poppins transition-all duration-[0.3s] ease-in-out text-[14px] leading-[16px] font-semibold text-[#3d4750] tracking-[0.03rem] whitespace-nowrap"
@@ -196,6 +196,17 @@ const visible = ref(false);
                           v-if="user"
                           class="bb-dropdown-menu min-w-[150px] py-[10px] px-[5px] transition-all duration-[0.3s] ease-in-out mt-[25px] absolute z-[16] text-left opacity-[0] right-[auto] bg-[#fff] border-[1px] border-solid border-[#eee] block rounded-[10px]"
                       >
+                        <li
+                            v-if="user.role === 'ADMIN'"
+                            class="py-[4px] px-[15px] m-[0] font-Poppins text-[15px] text-[#686e7d] font-light leading-[28px] tracking-[0.03rem]"
+                        >
+                          <router-link
+                              to="/admin/home"
+                              class="dropdown-item transition-all duration-[0.3s] ease-in-out font-Poppins text-[13px] hover:text-[#6c7fd8] leading-[22px] block w-full font-normal tracking-[0.03rem]"
+                          >
+                            Bảng Điều Khiển
+                          </router-link>
+                        </li>
                         <li
                             class="py-[4px] px-[15px] m-[0] font-Poppins text-[15px] text-[#686e7d] font-light leading-[28px] tracking-[0.03rem]"
                         >

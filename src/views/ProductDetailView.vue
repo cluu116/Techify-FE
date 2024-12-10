@@ -14,7 +14,7 @@
       <div class="flex flex-col items-center space-y-2 overflow-hidden h-80">
         <div class="flex flex-col items-center space-y-2 overflow-hidden h-80">
           <div v-for="(image, index) in detailProduct?.images" :key="index"
-               class="w-24 h-24 bg-gray-200 flex items-center justify-center cursor-pointer"
+               class="w-24 h-24 bg-gray-100 flex items-center justify-center cursor-pointer"
                @click="selectImage(image)">
             <img
                 :alt="`Thumbnail image ${index + 1}`"
@@ -36,7 +36,7 @@
         class="w-2/4 flex items-center justify-center relative"
         style="margin-left: -65px;margin-right: 25px"
     >
-      <div class="w-full h-full bg-gray-200 flex items-center justify-center">
+      <div class="w-full h-full bg-gray-100 flex items-center justify-center">
         <img
             v-if="detailProduct"
             class="img-responsive rounded-tl-[15px] rounded-tr-[15px] max-w-full max-h-[418px] object-contain"
@@ -45,7 +45,6 @@
         />
       </div>
       <div
-          class="absolute top-2 left-2 bg-black bg-opacity-50 rounded-full p-2"
       >
         <i class="fas fa-heart text-white"></i>
       </div>
@@ -92,7 +91,8 @@
         </div>
       </div>
       <div class="mt-2 text-sm text-gray-500">
-        <span class="text-green-500">Tình trạng: {{ detailProduct?.inStock ? 'Còn hàng' : 'Hết hàng' }}</span>
+        <label class="text-gray-500">Tình trạng: </label>
+        <span class="text-green-500">{{ detailProduct?.status }}</span>
       </div>
 
       <!-- Options -->
@@ -124,46 +124,47 @@
           <p v-else class="text-gray-500 italic">Không có màu sắc cho sản phẩm này.</p>
         </div>
       </div>
-      <div class="mt-4">
-        <label class="block text-sm font-medium text-gray-700"
-        >Kích thước</label
-        >
-        <select
-            class="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-        >
-          <option>92 × 99 × 165 mm</option>
-          <option>100 x 100 x 200 mm</option>
-        </select>
+      <div v-if="hasSizes" class="mt-4">
+        <label class="block text-sm font-medium text-gray-700 mb-2">Kích thước</label>
+        <div class="bb-pro-variation-contant">
+          <ul class="flex flex-wrap gap-2">
+            <li v-for="size in parsedSizes" :key="size" class="relative">
+              <button
+                  class="px-3 py-2 border border-gray-300 rounded-md text-sm transition-all duration-200 ease-in-out"
+                  :class="{ 'bg-indigo-100': selectedSize === size }"
+                  @click="selectedSize = size"
+              >
+                {{ size }}
+              </button>
+            </li>
+          </ul>
+        </div>
       </div>
 
       <!-- Quantity Selector -->
       <div class="mt-4 flex items-center">
-        <label class="block text-sm font-medium text-gray-700 mr-4"
-        >Số lượng</label
-        >
-        <div class="bb-single-qty flex flex-wrap m-[-2px]">
-          <div
-              class="qty-plus-minus m-[2px] w-[85px] h-[40px] py-[7px] border-[1px] border-solid border-[#eee] overflow-hidden relative flex items-center justify-between bg-[#fff] rounded-[10px]"
+        <label class="block text-sm font-medium text-gray-700 mr-4">Số lượng</label>
+        <div class="flex items-center border border-gray-300 rounded-md">
+          <button
+              class="px-3 py-2 text-gray-600 hover:bg-gray-100 focus:outline-none"
+              @click="decreaseQuantity"
           >
-            <button
-                class="qty-minus w-[25px] h-[25px] flex items-center justify-center text-[#777] hover:text-[#6c7fd8]"
-                @click="quantity > 1 ? quantity-- : null"
-            >
-              <i class="ri-subtract-line"></i>
-            </button>
-            <input
-                type="text"
-                class="qty-input w-[35px] h-full border-none text-center font-Poppins text-[14px] text-[#777]"
-                v-model="quantity"
-                readonly
-            />
-            <button
-                class="qty-plus w-[25px] h-[25px] flex items-center justify-center text-[#777] hover:text-[#6c7fd8]"
-                @click="quantity++"
-            >
-              <i class="ri-add-line"></i>
-            </button>
-          </div>
+            <i class="ri-subtract-line"></i>
+          </button>
+          <input
+              type="number"
+              class="w-16 text-center border-none focus:ring-0 text-gray-700 no-spinner"
+              v-model.number="quantity"
+              @input="validateQuantity"
+              min="1"
+              :max="detailProduct?.inventoryQuantity"
+          />
+          <button
+              class="px-3 py-2 text-gray-600 hover:bg-gray-100 focus:outline-none"
+              @click="increaseQuantity"
+          >
+            <i class="ri-add-line"></i>
+          </button>
         </div>
       </div>
 
@@ -188,7 +189,8 @@
     </div>
   </div>
 
-  <div id="app" class="bg-gray-100">
+<!--app-->
+  <div id="app" class="bg-gray-50">
     <main class="container mx-auto px-4 py-6">
       <div class="flex flex-col lg:flex-row">
         <div class="lg:w-1/2"></div>
@@ -199,117 +201,44 @@
         <div class="bg-white rounded-lg shadow-md p-4">
           <div class="border-b border-gray-300 mb-4">
             <ul class="flex space-x-4 text-gray-600">
-              <li
-                  class="py-2 px-4 border-b-2 border-transparent hover:border-black cursor-pointer"
-              >
+              <li class="py-2 px-4 border-b-2 border-black cursor-pointer">
                 Giới thiệu
               </li>
-              <li class="py-2 px-4 border-b-2 border-black cursor-pointer">
+              <li class="py-2 px-4 border-b-2 border-transparent hover:border-black cursor-pointer">
                 Thông số kỹ thuật
               </li>
-              <li
-                  class="py-2 px-4 border-b-2 border-transparent hover:border-black cursor-pointer"
-              >
+              <li class="py-2 px-4 border-b-2 border-transparent hover:border-black cursor-pointer">
                 Đánh giá
               </li>
-              <li
-                  class="py-2 px-4 border-b-2 border-transparent hover:border-black cursor-pointer"
-              >
+              <li class="py-2 px-4 border-b-2 border-transparent hover:border-black cursor-pointer">
                 Sản phẩm liên quan
               </li>
             </ul>
           </div>
           <div class="flex flex-col lg:flex-row">
             <div class="flex-1">
-              <h1 class="text-2xl font-bold mb-4">Thiết kế đầy cá tính</h1>
-              <p class="mb-4">
-                Hệ thống loa Logitech Z906 bao gồm 1 loa bass công suất 165W,
-                5 loa vệ tinh mỗi loa công suất 67W, 1 bộ khuyếch đại âm
-                thanh, điều khiển từ xa. Loa có thiết kế phong cách hiện đại,
-                đầy cá tính, đáp ứng mọi nhu cầu âm thanh của bạn.
-              </p>
-              <div
-                  class="bg-gray-200 h-64 flex items-center justify-center mb-4"
-              >
+              <h1 class="text-2xl font-bold mb-4">{{ detailProduct?.name }}</h1>
+              <p class="mb-4" v-html="detailProduct?.description"></p>
+              <div class="bg-gray-100 h-64 flex items-center justify-center mb-4">
                 <img
-                    alt="Placeholder image for product"
+                    :alt="detailProduct?.name"
                     class="h-full w-full object-cover"
-                    height="400"
-                    src="https://placehold.co/600x400"
-                    width="600"
+                    :src="getImageUrl(detailProduct?.thumbnail)"
                 />
               </div>
-              <h2 class="text-xl font-bold mb-2">
-                Loa bass âm thanh siêu trầm
-              </h2>
-              <p class="mb-4">
-                Logitech Z906 có loa bass kích thước màng loa 8 inchs, công
-                suất lên tới 165W, cho âm thanh siêu trầm. Z906 có thể đáp ứng
-                được tất cả các bản nhạc có âm thanh cực nhỏ, nhỏ, lớn hay cực
-                lớn.
-              </p>
-              <h2 class="text-xl font-bold mb-2">Điều khiển từ xa</h2>
-              <p>
-                Logitech Z906 trang bị điều khiển từ xa qua hồng ngoại, thiết
-                nhỏ gọn, sử dụng 3 pin AAA, có thể kết hợp với các thiết bị
-                phát âm thanh như: TV, DVD, DVR, Blu-ray™, Xbox 360,
-                PLAYSTATION 3, iPod...Điều khiển này có chức năng như: tăng
-                giảm âm thanh, tùy chọn các kênh, lựa chọn kiểu âm thanh (2.1
-                – 4.1 và 3D).
-              </p>
             </div>
             <div class="w-full lg:w-1/3 lg:ml-4 mt-4 lg:mt-0">
               <div class="bg-white border border-gray-300 rounded-lg p-4">
                 <h2 class="text-xl font-bold mb-4">Thông số kỹ thuật</h2>
                 <div class="space-y-2">
-                  <div class="flex justify-between bg-gray-100 p-2 rounded">
-                    <span class="font-semibold"> Cổng kết nối </span>
-                    <span> 2 cổng Optical, Coaxial, RCA, 3.5mm </span>
-                  </div>
-                  <div class="flex justify-between p-2 rounded">
-                    <span class="font-semibold"> Thương hiệu </span>
-                    <span> Logitech </span>
-                  </div>
-                  <div class="flex justify-between bg-gray-100 p-2 rounded">
-                    <span class="font-semibold"> Sản xuất tại </span>
-                    <span> Trung Quốc </span>
-                  </div>
-                  <div class="flex justify-between p-2 rounded">
-                    <span class="font-semibold"> Kích thước </span>
-                    <span>
-                        92 x 99 x 165 mm | 92 x 165 x 99 mm | 318 x 280 x 292 mm
-                        | 179 x 42 x 110 mm | 18 x 42 x 110 mm
-                      </span>
-                  </div>
-                  <div class="flex justify-between bg-gray-100 p-2 rounded">
-                    <span class="font-semibold"> Sản xuất tại </span>
-                    <span> Trung Quốc </span>
-                  </div>
-                  <div class="flex justify-between p-2 rounded">
-                    <span class="font-semibold"> Màu </span>
-                    <span> Đen, Trắng, Đỏ, Bạc, Vàng </span>
-                  </div>
-                  <div class="flex justify-between bg-gray-100 p-2 rounded">
-                    <span class="font-semibold"> Kích thước </span>
-                    <span> 27.6 x 32.7 x 29.3 cm </span>
-                  </div>
-                  <div class="flex justify-between p-2 rounded">
-                    <span class="font-semibold"> Trọng lượng </span>
-                    <span> 5.9 kg </span>
-                  </div>
-                  <div class="flex justify-between bg-gray-100 p-2 rounded">
-                    <span class="font-semibold"> Điều khiển </span>
-                    <span> Nút bấm và công tắc vật lý </span>
-                  </div>
-
-                  <div class="flex justify-between bg-gray-100 p-2 rounded">
-                    <span class="font-semibold"> Công suất </span>
-                    <span> 100 W </span>
+                  <div v-for="(value, key, index) in detailProduct?.attributes" :key="key"
+                       class="flex justify-between p-2 rounded"
+                       :class="{'bg-gray-100': index % 2 === 0}">
+                    <span class="font-semibold">{{ key }}</span>
+                    <span>{{ value }}</span>
                   </div>
                 </div>
-                <button
-                    class="mt-4 w-full bg-gray-200 text-gray-700 py-2 rounded-lg"
-                >
+                <button class="mt-4 w-full bg-gray-100 text-gray-700 py-2 rounded-lg">
                   Xem thông số chi tiết
                 </button>
               </div>
@@ -389,7 +318,7 @@
               <button
                   @click="changePage('prev')"
                   :disabled="currentPage === 1"
-                  class="px-3 py-1 rounded bg-gray-200 text-gray-700 disabled:opacity-50"
+                  class="px-3 py-1 rounded bg-gray-100 text-gray-700 disabled:opacity-50"
               >
                 Trước
               </button>
@@ -397,14 +326,14 @@
                   v-for="page in totalPages"
                   :key="page"
                   @click="changePage(page)"
-                  :class="['mx-1 px-3 py-1 rounded', currentPage === page ? 'bg-blue-500 text-white' : 'bg-gray-200']"
+                  :class="['mx-1 px-3 py-1 rounded', currentPage === page ? 'bg-blue-500 text-white' : 'bg-gray-100']"
               >
                 {{ page }}
               </button>
               <button
                   @click="changePage('next')"
                   :disabled="currentPage === totalPages"
-                  class="px-3 py-1 rounded bg-gray-200 text-gray-700 disabled:opacity-50"
+                  class="px-3 py-1 rounded bg-gray-100 text-gray-700 disabled:opacity-50"
               >
                 Sau
               </button>
@@ -414,68 +343,108 @@
       </div>
 
       <!-- Related Products Section -->
-      <div class="p-4" id="app">
-        <div class="w-full">
-          <h2 class="text-xl font-bold mb-4">Sản phẩm liên quan</h2>
-          <div class="relative">
-            <div class="flex items-center">
-              <button
-                  class="absolute left-0 bg-teal-600 text-white rounded-full p-2"
-              >
-                <i class="fas fa-chevron-left"></i>
-              </button>
-              <div class="flex overflow-x-auto space-x-4 px-8 w-full">
-                <div
-                    v-for="product in relatedProducts"
-                    :key="product.id"
-                    class="relative bg-white border rounded-lg shadow-md p-4 w-64 flex-shrink-0"
-                >
-                  <div
-                      v-if="product.promotionPrice < product.sellPrice"
-                      class="absolute top-0 right-0 bg-red-500 text-white text-xs font-bold px-2 py-1"
-                  >
-                    -{{ Math.round((1 - product.promotionPrice / product.sellPrice) * 100) }}%
+      <div class="mt-8 p-4" id="related-products">
+        <h2 class="text-2xl font-bold mb-6">Sản phẩm liên quan</h2>
+        <div class="relative">
+          <button
+              @click="scrollProducts('left')"
+              class="absolute left-0 top-1/2 transform -translate-y-1/2 bg-white text-gray-800 rounded-full p-2 shadow-md hover:bg-gray-100 transition duration-300 z-10"
+          >
+            <i class="fas fa-chevron-left"></i>
+          </button>
+          <div ref="productContainer" class="flex overflow-x-auto scrollbar-hide space-x-4 px-8">
+            <div
+                v-for="product in relatedProducts"
+                :key="product.id"
+                class="min-[1200px]:w-[25%] min-[768px]:w-[33.33%] w-[50%] max-[480px]:w-full px-[12px] mb-[24px]"
+                data-aos="fade-up"
+                data-aos-duration="1000"
+                data-aos-delay="200"
+            >
+              <div class="bb-pro-box bg-[#fff] border-[1px] border-solid border-[#eee] rounded-[20px]">
+                <div class="bb-pro-img overflow-hidden relative border-b-[1px] border-solid border-[#eee] z-[4]">
+            <span v-if="product.promotionPrice < product.sellPrice" class="flags transition-all duration-[0.3s] ease-in-out absolute z-[5] top-[10px] left-[6px]">
+              <span class="text-[14px] text-[#777] font-medium uppercase">Liên quan</span>
+            </span>
+                  <router-link :to="`/product/${product.id}`">
+                    <div class="inner-img relative block overflow-hidden pointer-events-none rounded-t-[20px]">
+                      <img
+                          class="main-img transition-all duration-[0.3s] ease-in-out w-full h-[200px] object-cover"
+                          :src="getImageUrl(product.thumbnail)"
+                          :alt="product.name"
+                      />
+                    </div>
+                  </router-link>
+                  <ul class="bb-pro-actions transition-all duration-[0.3s] ease-in-out my-[0] mx-[auto] absolute z-[9] left-[0] right-[0] bottom-[0] flex flex-row items-center justify-center opacity-0 group-hover:opacity-100">
+                    <li class="transition-all duration-[0.3s] ease-in-out w-[90%] h-[45px] mx-[2px] flex items-center justify-center">
+                      <router-link
+                          :to="`/product/${product.id}`"
+                          title="Mua ngay"
+                          class="cart-btn w-full h-full flex items-center justify-center gap-2 rounded-[10px] font-semibold"
+                      >
+                        <i class="ri-shopping-cart-2-line text-lg"></i>
+                        <span>Mua ngay</span>
+                      </router-link>
+                    </li>
+                  </ul>
+                </div>
+                <div class="bb-pro-contact p-[20px]">
+                  <div class="bb-pro-subtitle mb-[8px] flex flex-wrap justify-between">
+                    <router-link
+                        :to="`/category/${product.category.id}/products`"
+                        class="transition-all duration-[0.3s] ease-in-out font-Poppins text-[13px] leading-[16px] text-[#777] font-light tracking-[0.03rem]"
+                    >
+                      {{ product.category.name }}
+                    </router-link>
+                    <span class="bb-pro-rating">
+                <i
+                    v-for="i in product.avgRating"
+                    :key="i"
+                    class="ri-star-fill float-left text-[15px] mr-[3px] leading-[18px] text-[#fea99a]"
+                ></i>
+                <i
+                    v-for="i in 5 - product.avgRating"
+                    :key="'empty' + i"
+                    class="ri-star-line float-left text-[15px] mr-[3px] leading-[18px] text-[#777]"
+                ></i>
+              </span>
                   </div>
-                  <img
-                      :src="getImageUrl(product.thumbnail)"
-                      :alt="product.name"
-                      class="w-full h-40 object-cover mb-4"
-                  />
-                  <h3 class="text-sm font-semibold">{{ product.name }}</h3>
-                  <div class="text-lg font-bold text-red-500">
-                    {{ formatCurrency(product.promotionPrice) }}
+                  <h4 class="bb-pro-title mb-[8px] text-[16px] leading-[18px]">
+                    <router-link
+                        :to="`/product/${product.id}`"
+                        class="transition-all duration-[0.3s] ease-in-out font-quicksand w-full block whitespace-nowrap overflow-hidden text-ellipsis text-[15px] leading-[18px] text-[#3d4750] font-semibold tracking-[0.03rem]"
+                    >
+                      {{ product.name }}
+                    </router-link>
+                  </h4>
+                  <!-- Thêm thông tin về thương hiệu -->
+                  <p class="text-[13px] text-[#777] mb-[8px]">
+                    Thương hiệu: {{ product.brand }}
+                  </p>
+                  <div class="bb-price flex flex-wrap justify-between">
+                    <div class="inner-price mx-[-3px]">
+                <span class="new-price px-[3px] text-[16px] text-[#686e7d] font-bold">
+                  {{ formatCurrency(product.promotionPrice) }}
+                </span>
+                      <span
+                          v-if="product.promotionPrice < product.sellPrice"
+                          class="old-price px-[3px] text-[14px] text-[#686e7d] line-through"
+                          :data-discount="`${product?.formattedDiscount}`"
+                      >
+                  {{ formatCurrency(product.sellPrice) }}
+                </span>
+                    </div>
                   </div>
-                  <div v-if="product.promotionPrice < product.sellPrice" class="text-sm text-gray-500 line-through">
-                    {{ formatCurrency(product.sellPrice) }}
-                  </div>
-                  <button
-                      @click="handleAddToCart(product)"
-                      class="mt-2 bg-orange-500 text-white text-sm font-bold py-2 px-4 rounded"
-                  >
-                    Mua ngay
-                  </button>
-                  <button class="absolute bottom-4 right-4 text-gray-500">
-                    <i class="far fa-heart"></i>
-                  </button>
                 </div>
               </div>
-              <button
-                  class="absolute right-0 bg-teal-600 text-white rounded-full p-2"
-              >
-                <i class="fas fa-chevron-right"></i>
-              </button>
-            </div>
-            <div class="flex justify-center mt-4 space-x-2">
-          <span
-              v-for="(_, index) in Math.ceil(relatedProducts.length / 4)"
-              :key="index"
-              :class="[
-              'w-2 h-2 rounded-full',
-              index === 0 ? 'bg-teal-600' : 'bg-gray-400'
-            ]"
-          ></span>
             </div>
           </div>
+          <button
+              @click="scrollProducts('right')"
+              class="absolute right-0 top-1/2 transform -translate-y-1/2 bg-white text-gray-800 rounded-full p-2 shadow-md hover:bg-gray-100 transition duration-300 z-10"
+          >
+            <i class="fas fa-chevron-right"></i>
+          </button>
         </div>
       </div>
     </main>
@@ -510,7 +479,47 @@ const isEditing = ref(false);
 const currentUserId = ref(null);
 const currentPage = ref(1);
 const itemsPerPage = 5;
+const selectedSize = ref('');
+const productContainer = ref(null);
 
+const parsedSizes = computed(() => {
+  if (!detailProduct.value?.sizes) return [];
+  try {
+    return JSON.parse(detailProduct.value.sizes);
+  } catch {
+    console.error('Error parsing sizes');
+    return [];
+  }
+});
+const scrollProducts = (direction) => {
+  if (productContainer.value) {
+    const scrollAmount = 300; // Adjust this value to control scroll distance
+    const currentScroll = productContainer.value.scrollLeft;
+    const newScroll = direction === 'left' ? currentScroll - scrollAmount : currentScroll + scrollAmount;
+    productContainer.value.scrollTo({
+      left: newScroll,
+      behavior: 'smooth'
+    });
+  }
+};
+const validateQuantity = () => {
+  if (quantity.value < 1) {
+    quantity.value = 1;
+  } else if (quantity.value > detailProduct.value.inventoryQuantity) {
+    quantity.value = detailProduct.value.inventoryQuantity;
+  }
+};
+const decreaseQuantity = () => {
+  if (quantity.value > 1) {
+    quantity.value--;
+  }
+};
+
+const increaseQuantity = () => {
+  if (quantity.value < detailProduct.value.inventoryQuantity) {
+    quantity.value++;
+  }
+};
 const paginatedReviews = computed(() => {
   const sortedReviews = [...reviews.value].sort((a, b) => {
     if (isCurrentUserReview(a) && !isCurrentUserReview(b)) return -1;
@@ -552,12 +561,9 @@ const totalPages = computed(() => {
 // Kiểm tra xem đánh giá có phải của người dùng hiện tại không
 const isCurrentUserReview = (review) => {
   if (!review || review.customerId === undefined || currentUserId.value === null || currentUserId.value === undefined) {
-    console.log('Returning false due to missing data');
     return false;
   }
-
   const isCurrentUser = review.customerId === currentUserId.value;
-  console.log('Is current user review:', isCurrentUser);
   return isCurrentUser;
 };
 
@@ -662,6 +668,12 @@ const fetchProductDetail = async () => {
     selectedImage.value = detailProduct.value.thumbnail;
   } catch (error) {
     console.error("Error fetching product details:", error);
+    toast.add({
+      severity: 'error',
+      summary: 'Lỗi',
+      detail: 'Không thể tải thông tin sản phẩm. Vui lòng thử lại sau.',
+      life: 3000
+    });
   }
 };
 
@@ -674,8 +686,32 @@ const fetchRelatedProducts = async () => {
   }
 };
 
+const hasSizes = computed(() => {
+  return parsedSizes.value && parsedSizes.value.length > 0;
+});
+
 const handleAddToCart = () => {
-  addToCart(detailProduct.value.id, quantity.value, selectedColor.value);
+  if (!selectedColor.value) {
+    toast.add({
+      severity: "error",
+      summary: "Lỗi",
+      detail: "Vui lòng chọn màu sắc",
+      life: 3000,
+    });
+    return;
+  }
+
+  if (hasSizes.value && !selectedSize.value) {
+    toast.add({
+      severity: "error",
+      summary: "Lỗi",
+      detail: "Vui lòng chọn kích thước",
+      life: 3000,
+    });
+    return;
+  }
+
+  addToCart(detailProduct.value.id, quantity.value, toast, selectedColor.value, selectedSize.value);
   toast.add({
     severity: "success",
     summary: "Thành công",
@@ -698,11 +734,26 @@ onMounted(async () => {
 </script>
 <style>
 html, body {
-  scrollbar-width: none; /* For Firefox */
-  -ms-overflow-style: none; /* For Internet Explorer and Edge */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-spinner::-webkit-inner-spin-button,
+.no-spinner::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
+.bb-pro-box:hover .bb-pro-actions {
+  opacity: 1;
+}
 html::-webkit-scrollbar, body::-webkit-scrollbar {
-  width: 0px; /* For Chrome, Safari, and Opera */
+  width: 0px;
 }
 </style>

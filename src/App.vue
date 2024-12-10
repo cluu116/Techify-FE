@@ -2,6 +2,7 @@
   <Header v-if="!isAdminPage"/>
   <RouterView></RouterView>
   <Footer v-if="!isAdminPage"/>
+  <ScrollToTop v-if="!isAdminPage"/>
 </template>
 <script setup>
 import Header from "@/components/header/Header.vue";
@@ -9,6 +10,7 @@ import Footer from "@/components/footer/Footer.vue";
 import {useRoute} from "vue-router";
 import {computed} from "vue";
 import { createPinia } from 'pinia'
+import ScrollToTop from "@/components/hero/ScrollToTop.vue";
 
 const route = useRoute();
 const isAdminPage = computed(() => route.path.includes("admin"));

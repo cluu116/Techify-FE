@@ -6,6 +6,7 @@ import CheckoutView from "@/views/CheckoutView.vue";
 import ProductDetailView from "@/views/ProductDetailView.vue";
 import GoogleAuthCallback from "@/components/account/GoogleAuthCallback.vue";
 import FacebookAuthCallback from "@/components/account/FacebookAuthCallback.vue";
+import {authService} from "@/services/AuthService.js";
 
 
 const router = createRouter({
@@ -20,6 +21,7 @@ const router = createRouter({
             path: "/admin",
             name: "admin",
             component: () => import("@/views/admin/AdminView.vue"),
+            meta: { requiresAdmin: true },
             children: [
                 {
                     path: "/admin/home",
@@ -111,5 +113,25 @@ const router = createRouter({
         }
     }
 });
+router.beforeEach(async (to, from, next) => {
+    const requiresAdmin = to.matched.some(record => record.meta.requiresAdmin);
 
+    if (requiresAdmin) {
+        if (!authService.isAuthenticated || !authService.role) {
+            try {
+                await authService.getUserInfo();
+            } catch (error) {
+                console.error("Error fetching user info:", error);
+                next({ name: 'home' });
+                return;
+            }
+        }
+        if (authService.role !== 'ADMIN') {
+            next({ name: 'home' });
+            return;
+        }
+    }
+
+    next();
+});
 export default router;
