@@ -52,21 +52,17 @@ const visible = ref(false);
       >
         <div class="flex flex-wrap w-full">
           <div class="w-full px-[12px]">
-            <div class="inner-top-header flex justify-between">
-              <div class="col-left-bar">
-                <a
-                    href="shop-left-sidebar-col-3.html"
-                    class="transition-all duration-[0.3s] ease-in-out font-Poppins font-light text-[14px] text-[#fff] leading-[28px] tracking-[0.03rem]"
-                >Giảm Giá 10% Cho Toàn Bộ Sản Phẩm Trên Website.</a
-                >
-              </div>
-              <div class="col-right-bar flex">
-                <div class="cols px-[12px]">
-                  <a
-                      href="faq.html"
-                      class="transition-all duration-[0.3s] ease-in-out font-Poppins text-[14px] text-[#fff] font-light leading-[28px] tracking-[0.03rem]"
-                  >Cần Hỗ Trợ?</a
-                  >
+            <div class="top-header bg-[#3d4750] py-[4px] max-[991px]:hidden"> <!-- Reduced padding -->
+              <div class="container">
+                <div class="marquee-container flex overflow-hidden">
+                  <div class="marquee-wrapper flex w-full">
+                    <div class="marquee-text whitespace-nowrap animate-marquee mr-8">
+                      Chào mừng đến với Techify - Nơi công nghệ gặp gỡ sự tiện lợi! 🚀 Khám phá ưu đãi độc quyền và sản phẩm mới nhất của chúng tôi ngay hôm nay!
+                    </div>
+                    <div class="marquee-text whitespace-nowrap animate-marquee">
+                      Miễn phí vận chuyển cho đơn hàng trên 500,000đ 🚚 Đổi trả miễn phí trong 30 ngày 📅 Hỗ trợ kỹ thuật 24/7 🛠️
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -326,3 +322,41 @@ const visible = ref(false);
     <AccountForm/>
   </Dialog>
 </template>
+
+<style scoped>
+@keyframes marquee {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+
+.marquee-container {
+  width: 100%;
+  overflow: hidden;
+  background-color: #3d4750; /* Màu nền tối */
+}
+
+.marquee-wrapper {
+  display: inline-flex;
+  animation: marquee 30s linear infinite;
+}
+
+.marquee-text {
+  flex-shrink: 0;
+  padding-right: 50px; /* Khoảng cách giữa hai dòng text */
+  color: #ffffff; /* Màu chữ trắng */
+  font-size: 14px; /* Kích thước chữ */
+  font-weight: 500; /* Độ đậm của chữ */
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1); /* Tạo hiệu ứng bóng nhẹ */
+}
+
+/* Tạm dừng animation khi hover */
+.marquee-container:hover .marquee-wrapper {
+  animation-play-state: paused;
+}
+
+/* Thêm hiệu ứng hover cho text */
+.marquee-text:hover {
+  color: #6c7fd8; /* Màu chữ khi hover */
+  transition: color 0.3s ease;
+}
+</style>

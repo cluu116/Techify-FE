@@ -272,6 +272,9 @@ onMounted(() => {
                           {{ product.name }}
                         </router-link>
                       </h4>
+                      <p class="text-[13px] text-[#777] mb-[8px]">
+                        Thương hiệu: {{ product.brand }}
+                      </p>
                       <div class="bb-price flex flex-wrap justify-between">
                         <div class="inner-price mx-[-3px]">
                           <span
@@ -407,6 +410,9 @@ onMounted(() => {
                           {{ product.name }}
                         </router-link>
                       </h4>
+                        <p class="text-[13px] text-[#777] mb-[8px]">
+                          Thương hiệu: {{ product.brand }}
+                        </p>
                       <div class="bb-price flex flex-wrap justify-between">
                         <div class="inner-price mx-[-3px]">
                           <span
@@ -542,17 +548,20 @@ onMounted(() => {
                           {{ product.name }}
                         </router-link>
                       </h4>
+                      <p class="text-[13px] text-[#777] mb-[8px]">
+                        Thương hiệu: {{ product.brand }}
+                      </p>
                       <div class="bb-price flex flex-wrap justify-between">
                         <div class="inner-price mx-[-3px]">
                           <span
                               class="new-price px-[3px] text-[16px] text-[#686e7d] font-bold"
-                          >${{ product.promotionPrice }}</span
+                          >{{ formatCurrency(product.promotionPrice) }}</span
                           >
                           <span
                               v-if="product.promotionPrice < product.sellPrice"
                               class="old-price px-[3px] text-[14px] text-[#686e7d] line-through"
                               :data-discount="`${product?.formattedDiscount}`"
-                          >${{ product.sellPrice }}</span
+                          >${{ formatCurrency(product.sellPrice) }}</span
                           >
                         </div>
                       </div>

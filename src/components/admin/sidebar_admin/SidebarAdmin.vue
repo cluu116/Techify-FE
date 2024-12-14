@@ -182,7 +182,7 @@ const logout = async () => {
             icon="pi pi-user"
             class="flex-auto"
             outlined
-            link="/"
+            to="/"
         ></Button>
         <Button
             size="small"

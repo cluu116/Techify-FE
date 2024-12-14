@@ -1,9 +1,9 @@
 <script setup>
-import { onMounted, ref } from "vue";
-import { useRoute, useRouter } from "vue-router";
-import { useToast } from "primevue/usetoast";
+import {onMounted, ref} from "vue";
+import {useRoute, useRouter} from "vue-router";
+import {useToast} from "primevue/usetoast";
 import api from "@/services/ApiService.js";
-import { showError, showSuccess } from "@/services/ToastService.js";
+import {showError, showSuccess} from "@/services/ToastService.js";
 import {
   formatCurrency,
   formatDate,
@@ -29,14 +29,14 @@ const getOrderDetail = async () => {
     orderDetails.value = detailsResponse.data;
   } catch (error) {
     showError(toast, "Lỗi khi tải thông tin đơn hàng");
-    router.push("/admin/order");
+    await router.push("/admin/order");
   }
 };
 
 const updateOrderStatus = async (newStatus) => {
   try {
     const response = await api.put(
-      `order/${order.value.id}/status/${newStatus}`
+        `order/${order.value.id}/status/${newStatus}`
     );
     order.value = response.data;
     showSuccess(toast, "Cập nhật trạng thái đơn hàng thành công");
@@ -50,55 +50,55 @@ onMounted(getOrderDetail);
 
 <template>
   <Toast />
-  <div class="card" v-if="order">
+  <div class="card p-4 shadow-lg rounded-lg" v-if="order">
     <!-- Header Section -->
-    <div
-      class="flex justify-content-between align-items-center mb-4 pb-3 border-bottom-1 surface-border"
-    >
+    <div class="flex justify-between items-center mb-6 pb-4 border-b border-gray-200">
       <div>
-        <h2 class="text-3xl font-bold m-0 mb-2">Đơn Hàng #{{ order.id }}</h2>
-        <span class="text-500"
-          >Ngày tạo: {{ formatDate(order.createdAt) }}</span
-        >
+        <h2 class="text-3xl font-bold mb-2">Đơn Hàng #{{ order.id }}</h2>
+        <span class="text-gray-500">
+          <i class="pi pi-calendar mr-2"></i>
+          {{ formatDate(order.createdAt) }}
+        </span>
       </div>
-      <div class="flex gap-2">
+      <div class="flex gap-3">
         <Button
-          v-if="order.status === 0"
-          label="Xác Nhận"
-          icon="pi pi-check"
-          @click="updateOrderStatus(1)"
-          class="p-button-raised"
+            v-if="order.status === 1"
+            label="Xác nhận"
+            icon="pi pi-send"
+            @click="updateOrderStatus(2)"
+            class="p-button-raised p-button-info transition-all duration-200 hover:shadow-md"
         />
         <Button
-          v-if="order.status === 1"
-          label="Hoàn Thành"
-          icon="pi pi-check"
-          severity="success"
-          @click="updateOrderStatus(2)"
-          class="p-button-raised"
+            v-if="order.status === 2"
+            label="Hoàn Thành"
+            icon="pi pi-check-circle"
+            severity="success"
+            @click="updateOrderStatus(3)"
+            class="p-button-raised transition-all duration-200 hover:shadow-md"
         />
         <Button
-          v-if="order.status === 0"
-          label="Hủy"
-          icon="pi pi-times"
-          severity="danger"
-          @click="updateOrderStatus(3)"
-          class="p-button-raised"
+            v-if="order.status === 0 || order.status === 1"
+            label="Hủy"
+            icon="pi pi-times"
+            severity="danger"
+            @click="updateOrderStatus(4)"
+            class="p-button-raised transition-all duration-200 hover:shadow-md"
         />
       </div>
     </div>
 
-    <div class="grid">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <!-- Order Status Panel -->
-      <div class="col-12 mb-4">
-        <div class="surface-card border-round-xl p-4 h-full">
-          <div class="flex align-items-center gap-4">
+      <div class="col-span-full mb-6">
+        <div class="bg-white rounded-xl p-4 shadow-md">
+          <div class="flex items-center gap-4">
             <Tag
-              :value="getOrderStatusName(order.status)"
-              :severity="getOrderStatusSeverity(order.status)"
-              class="text-lg px-4 py-2"
+                :value="getOrderStatusName(order.status)"
+                :severity="getOrderStatusSeverity(order.status)"
+                class="text-lg px-4 py-2"
             />
-            <span class="text-600">
+            <span class="text-gray-600">
+              <i class="pi pi-clock mr-2"></i>
               Cập nhật lần cuối: {{ formatDate(order.updatedAt) }}
             </span>
           </div>
@@ -106,36 +106,32 @@ onMounted(getOrderDetail);
       </div>
 
       <!-- Order Info Panel -->
-      <div class="col-12 md:col-6 mb-4">
-        <Panel header="Thông Tin Đơn Hàng" class="h-full">
-          <div class="flex flex-column gap-4">
-            <div class="surface-ground p-3 border-round">
-              <div class="text-500 mb-2">Tạm Tính</div>
-              <div class="text-900 text-xl">
+      <div>
+        <Panel header="Thông Tin Đơn Hàng" class="h-full shadow-md">
+          <div class="space-y-4">
+            <div class="bg-gray-100 p-4 rounded-lg hover:shadow-md transition-shadow duration-300">
+              <div class="text-gray-600 mb-2">Tạm Tính</div>
+              <div class="text-xl font-semibold">
                 {{ formatCurrency(order.total) }}
               </div>
             </div>
 
             <div
-              v-if="order.disCountValue"
-              class="surface-ground p-3 border-round"
+                v-if="order.disCountValue"
+                class="bg-gray-100 p-4 rounded-lg hover:shadow-md transition-shadow duration-300"
             >
-              <div class="text-500 mb-2">Giảm Giá</div>
-              <div class="text-red-500 text-xl">
+              <div class="text-gray-600 mb-2">Giảm Giá</div>
+              <div class="text-xl font-semibold text-red-500">
                 -{{ formatCurrency(order.disCountValue) }}
               </div>
             </div>
 
             <div
-              class="surface-card p-4 border-round-xl border-2 border-primary"
+                class="bg-blue-50 p-5 rounded-xl border-2 border-blue-500 hover:shadow-lg transition-shadow duration-300"
             >
-              <div class="text-primary font-medium mb-2">Tổng Thanh Toán</div>
-              <div class="text-900 text-3xl font-bold">
-                {{
-                  formatCurrency(
-                    calculateFinalTotal(order.total, order.disCountValue)
-                  )
-                }}
+              <div class="text-blue-600 font-medium mb-2">Tổng Thanh Toán</div>
+              <div class="text-3xl font-bold text-blue-700">
+                {{ formatCurrency(calculateFinalTotal(order.total, order.disCountValue)) }}
               </div>
             </div>
           </div>
@@ -143,29 +139,25 @@ onMounted(getOrderDetail);
       </div>
 
       <!-- Customer Info Panel -->
-      <div class="col-12 md:col-6 mb-4">
-        <Panel header="Thông Tin Khách Hàng" class="h-full">
-          <div class="flex flex-column gap-4">
-            <div class="p-3 border-round surface-ground">
-              <div class="flex justify-content-between mb-3">
-                <span class="text-900 font-medium">{{
-                  `Khách Hàng: ${order.customerName}`
-                }}</span>
+      <div>
+        <Panel header="Thông Tin Khách Hàng" class="h-full shadow-md">
+          <div class="bg-gray-100 p-4 rounded-lg hover:shadow-md transition-shadow duration-300">
+            <div class="space-y-3">
+              <div class="flex items-center">
+                <i class="pi pi-user mr-3 text-blue-500"></i>
+                <span class="font-medium">{{ order.customerName }}</span>
               </div>
-              <div class="flex justify-content-between mb-3">
-                <span class="text-900 font-medium">{{
-                  `Địa Chỉ Giao Hàng: ${order.shippingAddress}`
-                }}</span>
+              <div class="flex items-center">
+                <i class="pi pi-map-marker mr-3 text-blue-500"></i>
+                <span class="font-medium">{{ order.shippingAddress }}</span>
               </div>
-              <div class="flex justify-content-between mb-3">
-                <span class="text-900 font-medium">{{
-                  `Phương Thức Thanh Toán: ${order.paymentMethodName}`
-                }}</span>
+              <div class="flex items-center">
+                <i class="pi pi-credit-card mr-3 text-blue-500"></i>
+                <span class="font-medium">{{ order.paymentMethodName }}</span>
               </div>
-              <div class="flex justify-content-between">
-                <span class="text-900 font-medium">{{
-                  `Đơn Vị Vận Chuyển: ${order.transportVendorName}`
-                }}</span>
+              <div class="flex items-center">
+                <i class="pi pi-truck mr-3 text-blue-500"></i>
+                <span class="font-medium">{{ order.transportVendorName }}</span>
               </div>
             </div>
           </div>
@@ -173,27 +165,32 @@ onMounted(getOrderDetail);
       </div>
 
       <!-- Order Details Table -->
-      <div class="col-12">
-        <Panel header="Chi Tiết Sản Phẩm">
+      <div class="col-span-full">
+        <Panel header="Chi Tiết Sản Phẩm" class="shadow-md">
           <DataTable
-            :value="orderDetails"
-            responsiveLayout="scroll"
-            class="p-datatable-sm"
+              :value="orderDetails"
+              responsiveLayout="scroll"
+              class="p-datatable-sm"
+              stripedRows
           >
             <Column header="Sản Phẩm" style="min-width: 300px">
               <template #body="slotProps">
-                <div class="flex align-items-center gap-3">
+                <div class="flex items-center gap-4">
                   <img
-                    class="product-thumbnail w-4rem h-4rem shadow-2 border-round"
-                    :src="getImageUrl(slotProps.data.productThumbnail)"
+                      class="w-16 h-16 object-cover rounded-lg shadow-sm"
+                      :src="getImageUrl(slotProps.data.productThumbnail)"
+                      :alt="slotProps.data.productName"
                   />
                   <div>
                     <div class="font-medium mb-1">
                       {{ slotProps.data.productName }}
                     </div>
-                    <span class="text-500"
-                      >Màu: {{ slotProps.data.color }}</span
-                    >
+                    <span class="text-gray-500 text-sm">
+                      Màu: {{ slotProps.data.color }}
+                      <template v-if="slotProps.data.size">
+                        | Size: {{ slotProps.data.size }}
+                      </template>
+                    </span>
                   </div>
                 </div>
               </template>
@@ -210,7 +207,7 @@ onMounted(getOrderDetail);
             </Column>
             <Column field="total" header="Thành Tiền" style="width: 150px">
               <template #body="slotProps">
-                <span class="text-primary font-medium">
+                <span class="text-blue-600 font-medium">
                   {{ slotProps.data.total.toLocaleString("vi-VN") }}đ
                 </span>
               </template>
@@ -229,6 +226,11 @@ onMounted(getOrderDetail);
   border-radius: 12px;
   margin-bottom: 1rem;
   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+  transition: box-shadow 0.3s ease;
+}
+
+.card:hover {
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
 }
 
 :deep(.p-panel) {
@@ -242,11 +244,18 @@ onMounted(getOrderDetail);
     padding: 1.25rem;
   }
 }
+
 .product-thumbnail {
   width: 64px;
   height: 64px;
   border-radius: 10px;
+  transition: transform 0.3s ease;
 }
+
+.product-thumbnail:hover {
+  transform: scale(1.05);
+}
+
 :deep(.p-tag) {
   font-weight: 600;
 }
@@ -260,5 +269,29 @@ onMounted(getOrderDetail);
   .p-column-header-content {
     font-weight: 600;
   }
+
+  .p-datatable-tbody > tr {
+    transition: background-color 0.3s ease;
+  }
+
+  .p-datatable-tbody > tr:hover {
+    background-color: var(--surface-hover);
+  }
+}
+
+.transition-colors {
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.transition-shadow {
+  transition: box-shadow 0.3s ease;
+}
+
+.transition-duration-150 {
+  transition-duration: 150ms;
+}
+
+.transition-duration-300 {
+  transition-duration: 300ms;
 }
 </style>

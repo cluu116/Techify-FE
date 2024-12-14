@@ -47,58 +47,58 @@ const viewOrderDetail = (orderId) => {
 onMounted(getOrders);
 </script>
 
-<template>
-  <div class="card">
-    <DataTable :value="orders" tableStyle="min-width: 50rem">
-      <Column field="id" header="Mã Đơn Hàng"></Column>
-      <Column field="customerName" header="Khách Hàng"></Column>
-      <Column
-        field="paymentMethodName"
-        header="Phương Thức Thanh Toán"
-      ></Column>
-      <Column header="Tổng Tiền">
-        <template #body="slotProps">
-          {{
-            formatCurrency(
-              calculateFinalTotal(
-                slotProps.data.total,
-                slotProps.data.disCountValue
+  <template>
+    <div class="card">
+      <DataTable :value="orders" tableStyle="min-width: 50rem">
+        <Column field="id" header="Mã Đơn Hàng"></Column>
+        <Column field="customerName" header="Khách Hàng"></Column>
+        <Column
+          field="paymentMethodName"
+          header="Phương Thức Thanh Toán"
+        ></Column>
+        <Column header="Tổng Tiền">
+          <template #body="slotProps">
+            {{
+              formatCurrency(
+                calculateFinalTotal(
+                  slotProps.data.total,
+                  slotProps.data.disCountValue
+                )
               )
-            )
-          }}
-        </template>
-      </Column>
-      <Column field="status" header="Trạng Thái">
-        <template #body="slotProps">
-          <Tag
-            :value="getOrderStatusName(slotProps.data.status)"
-            :severity="getOrderStatusSeverity(slotProps.data.status)"
-          />
-        </template>
-      </Column>
-      <Column field="createdAt" header="Ngày Tạo">
-        <template #body="slotProps">
-          {{ formatDate(slotProps.data.createdAt) }}
-        </template>
-      </Column>
-      <Column field="updatedAt" header="Ngày Cập Nhật">
-        <template #body="slotProps">
-          {{ formatDate(slotProps.data.updatedAt) }}
-        </template>
-      </Column>
-      <Column header="Thao Tác">
-        <template #body="slotProps">
-          <Button
-            @click="viewOrderDetail(slotProps.data.id)"
-            icon="pi pi-eye"
-            rounded
-            outlined
-          />
-        </template>
-      </Column>
-    </DataTable>
-  </div>
-</template>
+            }}
+          </template>
+        </Column>
+        <Column field="status" header="Trạng Thái">
+          <template #body="slotProps">
+            <Tag
+              :value="getOrderStatusName(slotProps.data.status)"
+              :severity="getOrderStatusSeverity(slotProps.data.status)"
+            />
+          </template>
+        </Column>
+        <Column field="createdAt" header="Ngày Tạo">
+          <template #body="slotProps">
+            {{ formatDate(slotProps.data.createdAt) }}
+          </template>
+        </Column>
+        <Column field="updatedAt" header="Ngày Cập Nhật">
+          <template #body="slotProps">
+            {{ formatDate(slotProps.data.updatedAt) }}
+          </template>
+        </Column>
+        <Column header="Thao Tác">
+          <template #body="slotProps">
+            <Button
+              @click="viewOrderDetail(slotProps.data.id)"
+              icon="pi pi-eye"
+              rounded
+              outlined
+            />
+          </template>
+        </Column>
+      </DataTable>
+    </div>
+  </template>
 
 <style scoped>
 .card {

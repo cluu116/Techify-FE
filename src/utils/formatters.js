@@ -20,18 +20,22 @@ export const formatDate = (dateString) => {
 };
 
 export const getOrderStatusName = (status) => {
-  if (status === 0) return "Chờ Xác Nhận";
-  if (status === 1) return "Đang Giao";
-  if (status === 2) return "Đã Giao";
-  if (status === 3) return "Đã Hủy";
+  if (status === 0) return "Chờ Thanh Toán";
+  if (status === 1) return "Chờ xác Nhận";
+  if (status === 2) return "Đang Giao";
+  if (status === 3) return "Hoàn Thành";
+  if (status === 4) return "Đã Hủy";
+  if (status === 5) return "Trả Hàng";
   return "N/A";
 };
 
 export const getOrderStatusSeverity = (status) => {
-  if (status === 0) return "primary";
+  if (status === 0) return "warning";
   if (status === 1) return "info";
-  if (status === 2) return "success";
-  if (status === 3) return "danger";
+  if (status === 2) return "primary";
+  if (status === 3) return "success";
+  if (status === 4) return "danger";
+  if (status === 5) return "secondary";
   return "secondary";
 };
 

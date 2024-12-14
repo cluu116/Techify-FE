@@ -7,7 +7,8 @@ import ProductDetailView from "@/views/ProductDetailView.vue";
 import GoogleAuthCallback from "@/components/account/GoogleAuthCallback.vue";
 import FacebookAuthCallback from "@/components/account/FacebookAuthCallback.vue";
 import {authService} from "@/services/AuthService.js";
-
+import PaymentResult from "@/components/order/PaymentResult.vue";
+import OrderSuccessView from "@/components/order/OrderSuccessView.vue";
 
 const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
@@ -21,7 +22,7 @@ const router = createRouter({
             path: "/admin",
             name: "admin",
             component: () => import("@/views/admin/AdminView.vue"),
-            meta: { requiresAdmin: true },
+            meta: {requiresAdmin: true},
             children: [
                 {
                     path: "/admin/home",
@@ -103,6 +104,16 @@ const router = createRouter({
             path: "/facebook-auth-callback",
             name: "FacebookAuthCallback",
             component: FacebookAuthCallback,
+        },
+        {
+            path: '/order-success/:orderId',
+            name: 'Trạng thái đơn hàng',
+            component: OrderSuccessView
+        },
+        {
+            path: '/payment-result',
+            name: 'Trạng thái thanh toán',
+            component: PaymentResult
         }
     ],
     scrollBehavior(to, from, savedPosition) {
@@ -122,12 +133,12 @@ router.beforeEach(async (to, from, next) => {
                 await authService.getUserInfo();
             } catch (error) {
                 console.error("Error fetching user info:", error);
-                next({ name: 'home' });
+                next({name: 'home'});
                 return;
             }
         }
         if (authService.role !== 'ADMIN') {
-            next({ name: 'home' });
+            next({name: 'home'});
             return;
         }
     }
