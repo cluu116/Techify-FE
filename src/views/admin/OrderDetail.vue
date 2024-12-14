@@ -110,9 +110,9 @@ onMounted(getOrderDetail);
         <Panel header="Thông Tin Đơn Hàng" class="h-full shadow-md">
           <div class="space-y-4">
             <div class="bg-gray-100 p-4 rounded-lg hover:shadow-md transition-shadow duration-300">
-              <div class="text-gray-600 mb-2">Tạm Tính</div>
+              <div class="text-gray-600 mb-2">Phí Vận Chuyển</div>
               <div class="text-xl font-semibold">
-                {{ formatCurrency(order.total) }}
+                {{ formatCurrency(order.shipPrice || 0) }}
               </div>
             </div>
 
