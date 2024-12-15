@@ -5,6 +5,8 @@ import { useToast } from 'primevue/usetoast';
 import api from "@/services/ApiService.js";
 import { clearCart } from "@/services/CartService.js";
 import Button from 'primevue/button';
+import emailjs from "@emailjs/browser";
+import {authService} from "@/services/AuthService.js";
 
 const route = useRoute();
 const router = useRouter();
@@ -29,6 +31,38 @@ const updateOrderStatus = async (orderId, newStatus) => {
   }
 };
 
+const sendEmail = async () => {
+  if (authService.isAuthenticated) {
+    try {
+      const userInfo = await authService.getUserInfo();
+      emailjs.send(
+      "service_yewje0g",
+      "template_r1hlp8m",
+      {
+        to_name: userInfo.fullName,
+        to_email: userInfo.email,
+      },
+      "f5X5p1n6nWpbqLaob"
+    )
+    .then(
+      () => {
+        console.log("SUCCESS!");
+      },
+      (error) => {
+        toast.add({
+          severity: "error",
+          summary: "Lỗi",
+          detail: "Đã có lỗi xảy ra, gửi email thất bại.",
+          life: 3000,
+        });
+      }
+    );
+    } catch (e) {
+      console.error('Error fetching user data:', e);
+    }
+  }
+};
+
 onMounted(async () => {
   const resultParam = route.query.result;
   const storedOrderId = sessionStorage.getItem('currentOrderId');
@@ -48,6 +82,7 @@ onMounted(async () => {
               detail: 'Thanh toán thành công và đơn hàng đã được xác nhận',
               life: 5000,
             });
+            await sendEmail();
           }
         } else {
           console.error('No stored orderId found');
