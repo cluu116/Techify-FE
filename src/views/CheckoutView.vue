@@ -6,6 +6,8 @@ import api from "@/services/ApiService";
 import {getCart} from "@/services/CartService";
 import {formatCurrency} from "@/utils/formatters";
 import getImageUrl from "@/utils/ImageUtils";
+import emailjs from "@emailjs/browser";
+import {authService} from "@/services/AuthService.js";
 
 const toast = useToast();
 const router = useRouter();
@@ -42,6 +44,38 @@ const loadCartData = async () => {
     const product = res.data;
     product.cartItem = item;
     products.value.push(product);
+  }
+};
+
+const sendEmail = async () => {
+  if (authService.isAuthenticated) {
+    try {
+      const userInfo = await authService.getUserInfo();
+      emailjs.send(
+      "service_yewje0g",
+      "template_r1hlp8m",
+      {
+        to_name: userInfo.fullName,
+        to_email: userInfo.email,
+      },
+      "f5X5p1n6nWpbqLaob"
+    )
+    .then(
+      () => {
+        console.log("SUCCESS!");
+      },
+      (error) => {
+        toast.add({
+          severity: "error",
+          summary: "Lỗi",
+          detail: "Đã có lỗi xảy ra, gửi email thất bại.",
+          life: 3000,
+        });
+      }
+    );
+    } catch (e) {
+      console.error('Error fetching user data:', e);
+    }
   }
 };
 
@@ -179,6 +213,7 @@ const handleCheckout = async () => {
           detail: "Đơn hàng của bạn đã được tạo. Bạn sẽ thanh toán khi nhận hàng.",
           life: 3000,
         });
+        await sendEmail();
         await router.push(`/order-success/${orderId}`);
       } else {
         // Xử lý cho các phương thức thanh toán khác (nếu có)
