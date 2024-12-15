@@ -208,7 +208,7 @@ const visible = ref(false);
                         >
                           <a
                               class="dropdown-item transition-all duration-[0.3s] ease-in-out font-Poppins text-[13px] hover:text-[#6c7fd8] leading-[22px] block w-full font-normal tracking-[0.03rem]"
-                              href="register.html"
+                              href="/user-profile"
                           >Thông Tin</a
                           >
                         </li>
@@ -217,7 +217,7 @@ const visible = ref(false);
                         >
                           <a
                               class="dropdown-item transition-all duration-[0.3s] ease-in-out font-Poppins text-[13px] hover:text-[#6c7fd8] leading-[22px] block w-full font-normal tracking-[0.03rem]"
-                              href="checkout.html"
+                              href="/my-order"
                           >Đơn Mua</a
                           >
                         </li>
