@@ -250,17 +250,17 @@ onMounted(() => {
                           {{ product.category.name }}
                         </router-link>
                         <span class="bb-pro-rating">
-                          <i
-                              v-for="i in product.avgRating"
-                              :key="i"
-                              class="ri-star-fill float-left text-[15px] mr-[3px] leading-[18px] text-[#fea99a]"
-                          ></i>
-                          <i
-                              v-for="i in 5 - product.avgRating"
-                              :key="'empty' + i"
-                              class="ri-star-line float-left text-[15px] mr-[3px] leading-[18px] text-[#777]"
-                          ></i>
-                        </span>
+  <template v-for="i in 5" :key="i">
+    <i
+        :class="[
+        product.avgRating >= i ? 'ri-star-fill' :
+        product.avgRating >= i - 0.5 ? 'ri-star-half-line' : 'ri-star-line',
+        'float-left text-[15px] mr-[3px] leading-[18px]',
+        product.avgRating >= i - 0.5 ? 'text-[#fea99a]' : 'text-[#777]'
+      ]"
+    ></i>
+  </template>
+</span>
                       </div>
                       <h4
                           class="bb-pro-title mb-[8px] text-[16px] leading-[18px]"
@@ -388,17 +388,17 @@ onMounted(() => {
                           {{ product.category.name }}
                         </router-link>
                         <span class="bb-pro-rating">
-                          <i
-                              v-for="i in product.avgRating"
-                              :key="i"
-                              class="ri-star-fill float-left text-[15px] mr-[3px] leading-[18px] text-[#fea99a]"
-                          ></i>
-                          <i
-                              v-for="i in 5 - product.avgRating"
-                              :key="'empty' + i"
-                              class="ri-star-line float-left text-[15px] mr-[3px] leading-[18px] text-[#777]"
-                          ></i>
-                        </span>
+  <template v-for="i in 5" :key="i">
+    <i
+        :class="[
+        product.avgRating >= i ? 'ri-star-fill' :
+        product.avgRating >= i - 0.5 ? 'ri-star-half-line' : 'ri-star-line',
+        'float-left text-[15px] mr-[3px] leading-[18px]',
+        product.avgRating >= i - 0.5 ? 'text-[#fea99a]' : 'text-[#777]'
+      ]"
+    ></i>
+  </template>
+</span>
                       </div>
                       <h4
                           class="bb-pro-title mb-[8px] text-[16px] leading-[18px]"
@@ -410,9 +410,9 @@ onMounted(() => {
                           {{ product.name }}
                         </router-link>
                       </h4>
-                        <p class="text-[13px] text-[#777] mb-[8px]">
-                          Thương hiệu: {{ product.brand }}
-                        </p>
+                      <p class="text-[13px] text-[#777] mb-[8px]">
+                        Thương hiệu: {{ product.brand }}
+                      </p>
                       <div class="bb-price flex flex-wrap justify-between">
                         <div class="inner-price mx-[-3px]">
                           <span
@@ -526,17 +526,17 @@ onMounted(() => {
                           {{ product.category.name }}
                         </router-link>
                         <span class="bb-pro-rating">
-                          <i
-                              v-for="i in product.avgRating"
-                              :key="i"
-                              class="ri-star-fill float-left text-[15px] mr-[3px] leading-[18px] text-[#fea99a]"
-                          ></i>
-                          <i
-                              v-for="i in 5 - product.avgRating"
-                              :key="'empty' + i"
-                              class="ri-star-line float-left text-[15px] mr-[3px] leading-[18px] text-[#777]"
-                          ></i>
-                        </span>
+  <template v-for="i in 5" :key="i">
+    <i
+        :class="[
+        product.avgRating >= i ? 'ri-star-fill' :
+        product.avgRating >= i - 0.5 ? 'ri-star-half-line' : 'ri-star-line',
+        'float-left text-[15px] mr-[3px] leading-[18px]',
+        product.avgRating >= i - 0.5 ? 'text-[#fea99a]' : 'text-[#777]'
+      ]"
+    ></i>
+  </template>
+</span>
                       </div>
                       <h4
                           class="bb-pro-title mb-[8px] text-[16px] leading-[18px]"
@@ -584,6 +584,7 @@ onMounted(() => {
 .cart-btn:focus {
   border-radius: 10px !important;
 }
+
 /* Add new animations */
 @keyframes slideIn {
   from {
@@ -833,7 +834,7 @@ onMounted(() => {
   align-items: center;
   gap: 8px;
   background: #f8f9fa;
-  padding: 8px 15px;
+  padding: 8px 5px;
   border-radius: 25px;
   transition: all 0.3s ease;
 }

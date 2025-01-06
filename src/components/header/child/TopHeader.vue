@@ -1,14 +1,55 @@
 <script setup>
-import {computed, onMounted, ref, watch} from "vue";
+import {computed, onMounted, onUnmounted, ref, watch} from "vue";
 import {Dialog} from "primevue";
 import AccountForm from "@/components/account/AccountForm.vue";
 import MobileSidebar from "@/components/header/child/MobileSidebar.vue";
 import {getCart} from '@/services/CartService';
 import {authService} from "@/services/AuthService.js";
-import router from "@/router/router.js";
+import {useRouter} from "vue-router";
+import api from "@/services/ApiService.js";
+import {formatCurrency} from "@/utils/formatters.js";
+import getImageUrl from "@/utils/ImageUtils.js";
+import {debounce} from "lodash";
 
 const sidebarVisible = ref(false);
 const user = ref(null);
+const router = useRouter();
+const searchKeyword = ref("");
+const searchResults = ref([]);
+const isDropdownVisible = ref(false);
+
+const searchProducts = async () => {
+  if (searchKeyword.value.trim().length > 0) {
+    try {
+      const response = await api.get(`/product/search?keyword=${searchKeyword.value.trim()}`);
+      searchResults.value = response.data.content || [];
+      isDropdownVisible.value = true;
+    } catch (error) {
+      console.error("Error searching products:", error);
+      searchResults.value = [];
+    }
+  } else {
+    isDropdownVisible.value = false;
+    searchResults.value = [];
+  }
+};
+
+const debouncedSearch = debounce(searchProducts, 300);
+
+watch(searchKeyword, (newKeyword) => {
+  if (newKeyword.trim().length > 1) {
+    debouncedSearch();
+  } else {
+    searchResults.value = [];
+    isDropdownVisible.value = false;
+  }
+});
+
+const goToProductDetail = (productId) => {
+  router.push(`/product/${productId}`);
+  isDropdownVisible.value = false;
+  searchKeyword.value = "";
+};
 
 const cartItemCount = computed(() => {
   const cart = getCart().value;
@@ -24,6 +65,19 @@ const fetchUserData = async () => {
     }
   }
 };
+const hideDropdown = (event) => {
+  if (!event.target.closest('.header-search')) {
+    isDropdownVisible.value = false;
+  }
+};
+
+onMounted(() => {
+  document.addEventListener('click', hideDropdown);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', hideDropdown);
+});
 
 onMounted(() => {
   fetchUserData();
@@ -57,10 +111,12 @@ const visible = ref(false);
                 <div class="marquee-container flex overflow-hidden">
                   <div class="marquee-wrapper flex w-full">
                     <div class="marquee-text whitespace-nowrap animate-marquee mr-8">
-                      Chào mừng đến với Techify - Nơi công nghệ gặp gỡ sự tiện lợi! 🚀 Khám phá ưu đãi độc quyền và sản phẩm mới nhất của chúng tôi ngay hôm nay!
+                      Chào mừng đến với Techify - Nơi công nghệ gặp gỡ sự tiện lợi! 🚀 Khám phá ưu đãi độc quyền và sản
+                      phẩm mới nhất của chúng tôi ngay hôm nay!
                     </div>
                     <div class="marquee-text whitespace-nowrap animate-marquee">
-                      Miễn phí vận chuyển cho đơn hàng trên 500,000đ 🚚 Đổi trả miễn phí trong 30 ngày 📅 Hỗ trợ kỹ thuật 24/7 🛠️
+                      Miễn phí vận chuyển cho đơn hàng trên 500,000đ 🚚 Đổi trả miễn phí trong 30 ngày 📅 Hỗ trợ kỹ thuật
+                      24/7 🛠️
                     </div>
                   </div>
                 </div>
@@ -83,7 +139,15 @@ const visible = ref(false);
                 <a href="/">
                   <div class="header-logo flex items-center max-[575px]:justify-center">
                     <h1 class="text-[30px] text-[#3d4750] font-bold leading-[1] tracking-[0.03rem] flex items-center">
-                      <svg class="mr-2" width="35" height="40" viewBox="0 0 35 40" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M25.87 18.05L23.16 17.45L25.27 20.46V29.78L32.49 23.76V13.53L29.18 14.73L25.87 18.04V18.05ZM25.27 35.49L29.18 31.58V27.67L25.27 30.98V35.49ZM20.16 17.14H20.03H20.17H20.16ZM30.1 5.19L34.89 4.81L33.08 12.33L24.1 15.67L30.08 5.2L30.1 5.19ZM5.72 14.74L2.41 13.54V23.77L9.63 29.79V20.47L11.74 17.46L9.03 18.06L5.72 14.75V14.74ZM9.63 30.98L5.72 27.67V31.58L9.63 35.49V30.98ZM4.8 5.2L10.78 15.67L1.81 12.33L0 4.81L4.79 5.19L4.8 5.2ZM24.37 21.05V34.59L22.56 37.29L20.46 39.4H14.44L12.34 37.29L10.53 34.59V21.05L12.42 18.23L17.45 26.8L22.48 18.23L24.37 21.05ZM22.85 0L22.57 0.69L17.45 13.08L12.33 0.69L12.05 0H22.85Z" fill="var(--p-primary-color)"></path><path d="M30.69 4.21L24.37 4.81L22.57 0.69L22.86 0H26.48L30.69 4.21ZM23.75 5.67L22.66 3.08L18.05 14.24V17.14H19.7H20.03H20.16H20.2L24.1 15.7L30.11 5.19L23.75 5.67ZM4.21002 4.21L10.53 4.81L12.33 0.69L12.05 0H8.43002L4.22002 4.21H4.21002ZM21.9 17.4L20.6 18.2H14.3L13 17.4L12.4 18.2L12.42 18.23L17.45 26.8L22.48 18.23L22.5 18.2L21.9 17.4ZM4.79002 5.19L10.8 15.7L14.7 17.14H14.74H15.2H16.85V14.24L12.24 3.09L11.15 5.68L4.79002 5.2V5.19Z" fill="var(--p-text-color)"></path></svg>
+                      <svg class="mr-2" width="35" height="40" viewBox="0 0 35 40" fill="none"
+                           xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M25.87 18.05L23.16 17.45L25.27 20.46V29.78L32.49 23.76V13.53L29.18 14.73L25.87 18.04V18.05ZM25.27 35.49L29.18 31.58V27.67L25.27 30.98V35.49ZM20.16 17.14H20.03H20.17H20.16ZM30.1 5.19L34.89 4.81L33.08 12.33L24.1 15.67L30.08 5.2L30.1 5.19ZM5.72 14.74L2.41 13.54V23.77L9.63 29.79V20.47L11.74 17.46L9.03 18.06L5.72 14.75V14.74ZM9.63 30.98L5.72 27.67V31.58L9.63 35.49V30.98ZM4.8 5.2L10.78 15.67L1.81 12.33L0 4.81L4.79 5.19L4.8 5.2ZM24.37 21.05V34.59L22.56 37.29L20.46 39.4H14.44L12.34 37.29L10.53 34.59V21.05L12.42 18.23L17.45 26.8L22.48 18.23L24.37 21.05ZM22.85 0L22.57 0.69L17.45 13.08L12.33 0.69L12.05 0H22.85Z"
+                            fill="var(--p-primary-color)"></path>
+                        <path
+                            d="M30.69 4.21L24.37 4.81L22.57 0.69L22.86 0H26.48L30.69 4.21ZM23.75 5.67L22.66 3.08L18.05 14.24V17.14H19.7H20.03H20.16H20.2L24.1 15.7L30.11 5.19L23.75 5.67ZM4.21002 4.21L10.53 4.81L12.33 0.69L12.05 0H8.43002L4.22002 4.21H4.21002ZM21.9 17.4L20.6 18.2H14.3L13 17.4L12.4 18.2L12.42 18.23L17.45 26.8L22.48 18.23L22.5 18.2L21.9 17.4ZM4.79002 5.19L10.8 15.7L14.7 17.14H14.74H15.2H16.85V14.24L12.24 3.09L11.15 5.68L4.79002 5.2V5.19Z"
+                            fill="var(--p-text-color)"></path>
+                      </svg>
                       <span>TECHIFY</span>
                     </h1>
                   </div>
@@ -108,35 +172,65 @@ const visible = ref(false);
               </div>
               <div class="cols flex justify-center">
                 <div
-                    class="header-search w-[600px] max-[1399px]:w-[500px] max-[1199px]:w-[400px] max-[991px]:w-full max-[991px]:min-w-[300px] max-[767px]:py-[15px] max-[480px]:min-w-[auto]"
-                >
+                    class="header-search w-[600px] max-[1399px]:w-[500px] max-[1199px]:w-[400px] max-[991px]:w-full max-[991px]:min-w-[300px] max-[767px]:py-[15px] max-[480px]:min-w-[auto] relative">
                   <form
                       class="bb-btn-group-form flex relative max-[991px]:ml-[20px] max-[767px]:m-[0]"
-                      action="#"
+                      @submit.prevent="searchProducts"
                   >
-                    <div
-                        class="inner-select border-r-[1px] border-solid border-[#eee] h-full px-[20px] flex items-center absolute top-[0] left-[0] max-[991px]:hidden"
-                    >
-                      <div
-                          class="custom-select w-[100px] capitalize text-[#777] flex items-center justify-between transition-all duration-[0.2s] ease-in text-[14px] relative"
-                      >
-                        <p>Tìm kiếm</p>
-                      </div>
-                    </div>
                     <input
-                        class="form-control bb-search-bar bg-[#fff] block w-full min-h-[45px] h-[48px] py-[10px] pr-[10px] pl-[160px] max-[991px]:min-h-[40px] max-[991px]:h-[40px] max-[991px]:p-[10px] text-[14px] font-normal leading-[1] text-[#777] rounded-[10px] border-[1px] border-solid border-[#eee] tracking-[0.5px]"
-                        placeholder="Nhập tên sản phẩm..."
+                        v-model="searchKeyword"
                         type="text"
+                        placeholder="Tìm kiếm sản phẩm..."
+                        @input="searchProducts"
+                        @focus="isDropdownVisible = true"
+                        class="w-full h-[50px] border-[1px] border-solid border-[#eee] rounded-[15px] pl-[20px] pr-[60px] text-[15px] text-[#686e7d] font-light leading-[28px] tracking-[0.03rem] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                     <button
-                        class="submit absolute top-[0] left-[auto] right-[0] flex items-center justify-center w-[45px] h-full bg-transparent text-[#555] text-[16px] rounded-[0] outline-[0] border-[0] padding-[0]"
                         type="submit"
+                        class="absolute top-[50%] right-[20px] transform -translate-y-1/2 bg-blue-500 text-white p-2 rounded-full hover:bg-blue-600 transition-colors duration-300 z-10"
                     >
-                      <i
-                          class="ri-search-line text-[18px] leading-[12px] text-[#555]"
-                      ></i>
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                           stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                      </svg>
                     </button>
                   </form>
+                  <div
+                      v-if="isDropdownVisible && searchResults && searchResults.length >= 0"
+                      class="absolute z-50 bg-white border border-gray-200 rounded-md shadow-lg mt-1 w-full max-h-[400px] overflow-y-auto"
+                  >
+                    <div v-if="searchResults.length === 0" class="p-4 text-gray-500 text-center">
+                      Không tìm thấy sản phẩm nào
+                    </div>
+                    <ul v-else>
+                      <li
+                          v-for="product in searchResults"
+                          :key="product.id"
+                          @click="goToProductDetail(product.id)"
+                          class="p-3 hover:bg-gray-100 cursor-pointer border-b border-gray-200 last:border-b-0"
+                      >
+                        <div class="flex items-center">
+                          <img :src="getImageUrl(product.thumbnail)" alt="Product Thumbnail"
+                               class="w-16 h-16 object-cover mr-4 rounded-md" loading="lazy"/>
+                          <div class="flex-grow">
+                            <div class="font-semibold text-gray-800">{{ product.name }}</div>
+                            <div class="text-sm mt-1">
+                  <span
+                      v-if="product.promotionPrice < product.sellPrice"
+                      class="text-gray-500 line-through mr-2"
+                  >
+                    {{ formatCurrency(product.sellPrice) }}
+                  </span>
+                              <span class="text-red-600 font-medium">
+                    {{ formatCurrency(product.promotionPrice) }}
+                  </span>
+                            </div>
+                          </div>
+                        </div>
+                      </li>
+                    </ul>
+                  </div>
                 </div>
               </div>
               <div class="cols bb-icons flex justify-center">
@@ -325,8 +419,12 @@ const visible = ref(false);
 
 <style scoped>
 @keyframes marquee {
-  0% { transform: translateX(100%); }
-  100% { transform: translateX(-100%); }
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
 }
 
 .marquee-container {
@@ -358,5 +456,51 @@ const visible = ref(false);
 .marquee-text:hover {
   color: #6c7fd8; /* Màu chữ khi hover */
   transition: color 0.3s ease;
+}
+
+.header-search {
+  position: relative;
+}
+
+.header-search .dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  max-height: 300px;
+  overflow-y: auto;
+  z-index: 1000;
+}
+
+.header-search ul {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e0 #f1f5f9;
+}
+
+.header-search ul::-webkit-scrollbar {
+  width: 6px;
+}
+
+.header-search ul::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+.header-search ul::-webkit-scrollbar-thumb {
+  background-color: #cbd5e0;
+  border-radius: 20px;
+  border: 3px solid #f1f5f9;
+}
+
+.bb-btn-group-form {
+  position: relative;
+  overflow: visible;
+}
+
+.bb-btn-group-form button {
+  position: absolute;
+  top: 50%;
+  right: 20px;
+  transform: translateY(-50%);
+  z-index: 10;
 }
 </style>

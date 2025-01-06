@@ -1,21 +1,21 @@
 <script setup>
-import {computed, onMounted, ref} from "vue";
-import {useToast} from "primevue/usetoast";
-import {useConfirm} from "primevue/useconfirm";
+import { computed, onMounted, ref } from "vue";
+import { useToast } from "primevue/usetoast";
+import { useConfirm } from "primevue/useconfirm";
 import api from "@/services/ApiService.js";
-import {showError, showSuccess} from "@/services/ToastService.js";
-import {showConfirmDelete} from "@/services/MyConfirmService.js";
-import {formatDate} from "@/utils/formatters.js";
-import {useRouter} from "vue-router";
+import { showError, showSuccess } from "@/services/ToastService.js";
+import { showConfirmDelete } from "@/services/MyConfirmService.js";
+import { formatDate } from "@/utils/formatters.js";
+import { useRouter } from "vue-router";
 
 const toast = useToast();
 const confirm = useConfirm();
 const router = useRouter();
 
-const vouchers = ref([]);
+const promotions = ref([]);
 const loading = ref(true);
 const filters = ref({
-  global: {value: null, matchMode: 'contains'},
+  global: { value: null, matchMode: 'contains' },
 });
 const totalRecords = ref(0);
 const lazyParams = ref({
@@ -26,13 +26,13 @@ const lazyParams = ref({
   sortOrder: null,
 });
 
-const getVouchers = async () => {
+const getPromotions = async () => {
   try {
-    const response = await api.get("voucher");
-    vouchers.value = response.data;
-    totalRecords.value = vouchers.value.length;
+    const response = await api.get("promotions");
+    promotions.value = response.data;
+    totalRecords.value = promotions.value.length;
   } catch (error) {
-    showError(toast, "Lỗi khi tải danh sách phiếu giảm giá");
+    showError(toast, "Lỗi khi tải danh sách khuyến mãi");
   } finally {
     loading.value = false;
   }
@@ -40,31 +40,31 @@ const getVouchers = async () => {
 
 const onPage = (event) => {
   lazyParams.value = event;
-  getVouchers();
+  getPromotions();
 };
 
 const onSort = (event) => {
   lazyParams.value = event;
-  getVouchers();
+  getPromotions();
 };
 
 const onFilter = () => {
   lazyParams.value.first = 0;
-  getVouchers();
+  getPromotions();
 };
 
-const paginateVouchers = computed(() => {
-  let filteredVouchers = vouchers.value;
+const paginatePromotions = computed(() => {
+  let filteredPromotions = promotions.value;
 
   if (filters.value.global.value) {
     const searchTerm = filters.value.global.value.toLowerCase();
-    filteredVouchers = filteredVouchers.filter(voucher =>
-        voucher.id.toString().toLowerCase().includes(searchTerm)
+    filteredPromotions = filteredPromotions.filter(promotion =>
+        promotion.name.toLowerCase().includes(searchTerm)
     );
   }
 
   if (lazyParams.value.sortField) {
-    filteredVouchers.sort((a, b) => {
+    filteredPromotions.sort((a, b) => {
       let result = a[lazyParams.value.sortField] < b[lazyParams.value.sortField] ? -1 : 1;
       return lazyParams.value.sortOrder === 1 ? result : -result;
     });
@@ -72,25 +72,26 @@ const paginateVouchers = computed(() => {
 
   const start = lazyParams.value.first;
   const end = start + lazyParams.value.rows;
-  return filteredVouchers.slice(start, end);
+  return filteredPromotions.slice(start, end);
 });
-const deleteVoucher = async (id) => {
+
+const deletePromotion = async (id) => {
   showConfirmDelete(confirm, async function () {
     try {
-      await api.delete(`voucher/${id}`);
-      await getVouchers();
-      showSuccess(toast, "Xóa phiếu giảm giá thành công");
+      await api.delete(`promotions/${id}`);
+      await getPromotions();
+      showSuccess(toast, "Xóa khuyến mãi thành công");
     } catch (error) {
-      showError(toast, "Xóa phiếu giảm giá thất bại");
+      showError(toast, "Xóa khuyến mãi thất bại");
     }
   });
 };
 
-const editVoucher = (voucher) => {
-  router.push(`/admin/voucher/edit/${voucher.id}`);
+const editPromotion = (promotion) => {
+  router.push(`/admin/promotion/edit/${promotion.id}`);
 };
 
-onMounted(getVouchers);
+onMounted(getPromotions);
 </script>
 
 <template>
@@ -100,28 +101,28 @@ onMounted(getVouchers);
     <Toolbar class="mb-4 bg-gray-100 border-round">
       <template #start>
         <Button
-            label="Thêm Phiếu Giảm Giá"
+            label="Thêm Khuyến Mãi"
             icon="pi pi-plus"
             class="p-button-primary"
-            @click="router.push('/admin/voucher/add')"
+            @click="router.push('/admin/promotion/add')"
         />
       </template>
       <template #end>
         <span class="p-input-icon-left">
           <i class="pi pi-search"/>
-          <InputText v-model="filters.global.value" placeholder="Tìm kiếm mã ..." class="w-full" />
+          <InputText v-model="filters.global.value" placeholder="Tìm kiếm ..." class="w-full"/>
         </span>
       </template>
     </Toolbar>
 
-    <div v-if="vouchers.length === 0 && !loading" class="text-center p-4">
+    <div v-if="promotions.length === 0 && !loading" class="text-center p-4">
       <i class="pi pi-inbox text-5xl text-gray-400 mb-4"></i>
-      <p class="text-xl text-gray-600">Không có phiếu giảm giá nào.</p>
-      <p class="text-gray-500 mt-2">Hãy thêm phiếu giảm giá mới để tiếp tục.</p>
+      <p class="text-xl text-gray-600">Không có khuyến mãi nào.</p>
+      <p class="text-gray-500 mt-2">Hãy thêm khuyến mãi mới để tiếp tục.</p>
     </div>
 
     <DataTable
-        :value="paginateVouchers"
+        :value="paginatePromotions"
         :lazy="true"
         :paginator="true"
         :rows="10"
@@ -133,47 +134,30 @@ onMounted(getVouchers);
         @filter="onFilter()"
         paginator-template="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
         :rows-per-page-options="[10,20,50]"
-        current-page-report-template="Hiển thị {first} đến {last} của {totalRecords} sản phẩm"
+        current-page-report-template="Hiển thị {first} đến {last} của {totalRecords} khuyến mãi"
         responsive-layout="scroll"
         class="p-datatable-sm"
     >
-      <Column field="id" header="Mã Giảm Giá" sortable></Column>
+      <Column field="name" header="Tên Khuyến Mãi" sortable></Column>
+      <Column field="description" header="Mô tả về khuyến mãi" sortable></Column>
       <Column field="discountType" header="Loại" sortable>
         <template #body="slotProps">
-          <span :class="{'text-blue-500': slotProps.data.discountType, 'text-green-500': !slotProps.data.discountType}">
-            {{ slotProps.data.discountType ? "Phần Trăm" : "Số Tiền" }}
+          <span
+              :class="{'text-blue-500': slotProps.data.discountType === true, 'text-green-500': slotProps.data.discountType === false}">
+            {{ slotProps.data.discountType === true ? "Phần Trăm" : "Số Tiền" }}
           </span>
         </template>
       </Column>
       <Column field="discountValue" header="Giá Trị" sortable>
         <template #body="slotProps">
-      <span class="font-bold"
-            :class="{'text-blue-500': slotProps.data.discountType, 'text-green-500': !slotProps.data.discountType}">
-        {{
-          slotProps.data.discountType
-              ? `${slotProps.data.discountValue}%`
-              : `${slotProps.data.discountValue.toLocaleString("vi-VN")}đ`
-        }}
-      </span>
-        </template>
-      </Column>
-      <Column field="minOrder" header="Đơn Hàng Tối Thiểu" sortable>
-        <template #body="slotProps">
-          {{ slotProps.data.minOrder.toLocaleString("vi-VN") }}đ
-        </template>
-      </Column>
-      <Column field="maxDiscount" header="Giảm Tối Đa" sortable>
-        <template #body="slotProps">
-          {{
-            slotProps.data.maxDiscount
-                ? `${slotProps.data.maxDiscount.toLocaleString("vi-VN")}đ`
-                : "Không giới hạn"
-          }}
-        </template>
-      </Column>
-      <Column field="usageLimit" header="Số Lượng" sortable>
-        <template #body="slotProps">
-          {{ slotProps.data.usageLimit || "Không giới hạn" }}
+          <span class="font-bold"
+                :class="{'text-blue-500': slotProps.data.discountType === true, 'text-green-500': slotProps.data.discountType === false}">
+            {{
+              slotProps.data.discountType === true
+                  ? `${slotProps.data.discountValue}%`
+                  : `${slotProps.data.discountValue.toLocaleString("vi-VN")}đ`
+            }}
+          </span>
         </template>
       </Column>
       <Column field="startDate" header="Ngày Bắt Đầu" sortable>
@@ -192,13 +176,13 @@ onMounted(getVouchers);
               icon="pi pi-pencil"
               rounded
               class="mr-2"
-              @click="editVoucher(slotProps.data)"
+              @click="editPromotion(slotProps.data)"
           />
           <Button
               icon="pi pi-trash"
               rounded
               severity="danger"
-              @click="deleteVoucher(slotProps.data.id)"
+              @click="deletePromotion(slotProps.data.id)"
           />
         </template>
       </Column>

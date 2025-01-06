@@ -37,36 +37,41 @@ const handleFileChange = async (event) => {
   }
 }
 const addProduct = async () => {
-  const imageUrls = ref([]);
-  for (const image of images.value) {
-    const formData = new FormData();
-    formData.append("image", image.file);
-    const res = await api.post("upload", formData);
-    imageUrls.value.push(res.data);
-  }
-  const payload = generateFormData("form_add");
-  payload.append('images', JSON.stringify(imageUrls.value));
-  payload.append('colors', JSON.stringify(colors.value));
-  payload.append('sizes', JSON.stringify(sizes.value));
-  payload.append('attributes', JSON.stringify(attributes.value));
-  const thumbnail = payload.get('thumbnail');
-  const thumbnailUrl = await api.post("upload", {image: thumbnail}, {
-    headers: {
-      'Content-Type': 'multipart/form-data'
+  try {
+    const imageUploadPromises = images.value.map(image => {
+      const formData = new FormData();
+      formData.append("image", image.file);
+      return api.post("upload", formData);
+    });
+    const imageResponses = await Promise.all(imageUploadPromises);
+    const imageUrls = imageResponses.map(res => res.data);
+
+    const payload = generateFormData("form_add");
+    payload.append('images', JSON.stringify(imageUrls));
+    payload.append('colors', JSON.stringify(colors.value));
+    payload.append('sizes', JSON.stringify(sizes.value));
+    payload.append('attributes', JSON.stringify(attributes.value));
+
+    const thumbnail = payload.get('thumbnail');
+    const thumbnailFormData = new FormData();
+    thumbnailFormData.append("image", thumbnail);
+    const thumbnailRes = await api.post("upload", thumbnailFormData, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    payload.set('thumbnail', JSON.stringify(thumbnailRes.data));
+
+    const res = await api.post("product", payload, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+
+    if (res.status === 200) {
+      showSuccess(toast, "Thêm Sản Phẩm Thành Công");
+    } else {
+      showError(toast, "Thêm Sản Phẩm Thất Bại, Hãy Thử Lại");
     }
-  });
-  payload.set('thumbnail', JSON.stringify(thumbnailUrl.data));
-  console.log(payload)
-  const res = await api.post("product", payload, {
-    headers: {
-      'Content-Type': 'multipart/form-data'
-    }
-  });
-  if (res.status === 200) {
-    showSuccess(toast, "Thêm Sản Phẩm,Thành Công");
-    // resetForm("form_add");
-  } else {
-    showError(toast, "Thêm Sản Phẩm Thất Bại, Hãy Thử Lại");
+  } catch (error) {
+    console.error("Error adding product:", error);
+    showError(toast, "Có lỗi xảy ra khi thêm sản phẩm");
   }
 }
 

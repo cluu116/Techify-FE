@@ -1,6 +1,6 @@
 <template>
   <section
-    class="relative bg-gradient-to-r from-blue-50 to-indigo-50 overflow-hidden"
+    class="relative bg-gradient-to-r from-red-500 to-indigo-50 overflow-hidden"
   >
     <div class="absolute inset-0">
       <div
@@ -24,7 +24,7 @@
                   class="hero-contact h-full flex flex-col items-start justify-center max-[991px]:items-center"
                 >
                   <p
-                    class="mb-[20px] font-Poppins text-[18px] text-[#777] font-light leading-[28px] tracking-[0.03rem] max-[1199px]:mb-[10px] max-[1199px]:text-[16px]"
+                    class="mb-[20px] font-Poppins text-[18px] text-[#ffff] font-light leading-[28px] tracking-[0.03rem] max-[1199px]:mb-[10px] max-[1199px]:text-[16px]"
                   >
                     Giảm Giá Đến 50%
                   </p>

@@ -1,4 +1,4 @@
-export function openDialog(dialog, component, header, functionOnClose) {
+export function openDialog(dialog, component, header, functionOnClose = {}) {
     dialog.open(component, {
         props: {
             header: header,
@@ -10,7 +10,7 @@ export function openDialog(dialog, component, header, functionOnClose) {
                 '640px': '90vw'
             },
             modal: true,
-            position: 'top'
+            position: 'top',
         },
         onClose: (options) => {
             functionOnClose()

@@ -1,12 +1,44 @@
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import { Button, useToast } from "primevue";
-import api, { generateFormData, resetForm } from "@/services/ApiService.js";
+import api, { generateFormData } from "@/services/ApiService.js";
 import { showError, showSuccess } from "@/services/ToastService.js";
+import { categoryStore } from "@/services/categoryStore.js";
+import getImageUrl from "@/utils/ImageUtils.js";
 
 const toast = useToast();
+
+const categoryName = ref('');
 const selectedImage = ref(null);
 const fileInput = ref(null);
+
+onMounted(async () => {
+  await fetchCategoryData();
+});
+
+const fetchCategoryData = async () => {
+  const id = categoryStore.selectedCategoryId
+  if (!id) {
+    console.error("No id provided")
+    showError(toast, "Không thể tải dữ liệu danh mục: ID không hợp lệ")
+    return
+  }
+  try {
+    const response = await api.get(`/parent_category/${id}`);
+    categoryName.value = response.data.name;
+    if (response.data.thumbnail) {
+      selectedImage.value = {
+        itemImageSrc: getImageUrl(response.data.thumbnail),
+        thumbnailImageSrc: getImageUrl(response.data.thumbnail),
+        alt: 'Hình Ảnh Danh Mục',
+        title: 'Hình Ảnh Danh Mục'
+      };
+    }
+  } catch (error) {
+    console.error("Error fetching category data:", error);
+    showError(toast, "Không thể tải dữ liệu danh mục");
+  }
+};
 
 const triggerFileInput = () => {
   fileInput.value.click();
@@ -32,54 +64,62 @@ const removeImage = () => {
   }
 };
 
-const add = async () => {
+const update = async () => {
+  const id = categoryStore.selectedCategoryId;
+  if (!id) {
+    console.error("No id provided");
+    showError(toast, "Không thể cập nhật danh mục: ID không hợp lệ");
+    return;
+  }
+
   try {
     let imageUrl = null;
-    if (selectedImage.value) {
+    if (selectedImage.value && selectedImage.value.file) {
       const imageFormData = new FormData();
       imageFormData.append("image", selectedImage.value.file);
       const imageResponse = await api.post("upload", imageFormData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+        headers: {'Content-Type': 'multipart/form-data'}
       });
       imageUrl = imageResponse.data;
     }
 
-    const formData = generateFormData("form_add");
+    const formData = generateFormData("form_update");
     if (imageUrl) {
       formData.append('thumbnail', JSON.stringify(imageUrl));
+    } else if (selectedImage.value) {
+      formData.append('thumbnail', selectedImage.value.itemImageSrc);
     }
 
-    const res = await api.post("/parent_category", formData, {
+    const res = await api.put(`/parent_category/${id}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
     });
 
     if (res.status === 200) {
-      showSuccess(toast, "Thêm danh mục sản phẩm thành công");
-      resetForm("form_add");
-      removeImage();
+      showSuccess(toast, "Cập nhật danh mục sản phẩm thành công");
     } else {
-      showError(toast, "Thêm danh mục sản phẩm thất bại, hãy thử lại");
+      showError(toast, "Cập nhật danh mục sản phẩm thất bại, hãy thử lại");
     }
   } catch (error) {
-    console.error("Error adding category:", error);
-    showError(toast, "Có lỗi xảy ra khi thêm danh mục sản phẩm");
+    console.error("Error updating category:", error);
+    showError(toast, "Có lỗi xảy ra khi cập nhật danh mục sản phẩm");
   }
 };
 </script>
 
 <template>
-  <Toast />
+  <Toast/>
   <div class="p-6 bg-white rounded-lg shadow-md">
-    <h2 class="text-2xl font-semibold mb-6 text-gray-800">Thêm Danh Mục Sản Phẩm Mới</h2>
-    <form @submit.prevent="add" id="form_add" class="space-y-6">
+    <h2 class="text-2xl font-semibold mb-6 text-gray-800">Cập Nhật Danh Mục Sản Phẩm</h2>
+    <form @submit.prevent="update" id="form_update" class="space-y-6">
       <div>
         <label
             for="category_name"
             class="block text-sm font-medium text-gray-700 mb-1"
         >Tên Danh Mục Sản Phẩm</label>
         <input
+            v-model="categoryName"
             required
             type="text"
             id="category_name"
@@ -103,7 +143,7 @@ const add = async () => {
               class="p-button-outlined"
           />
           <span v-if="selectedImage" class="text-sm text-gray-500">
-            {{ selectedImage.file.name }}
+            {{ selectedImage.file ? selectedImage.file.name : 'Hình ảnh hiện tại' }}
           </span>
         </div>
         <input
@@ -130,9 +170,16 @@ const add = async () => {
         />
       </div>
 
-      <div class="flex justify-end">
+      <div class="flex justify-end space-x-4">
         <Button
-            label="Thêm Danh Mục"
+            label="Hủy"
+            type="button"
+            icon="pi pi-times"
+            class="p-button-secondary"
+            @click="$router.push('/admin/category')"
+        />
+        <Button
+            label="Cập Nhật"
             type="submit"
             icon="pi pi-check"
             class="p-button-success"
