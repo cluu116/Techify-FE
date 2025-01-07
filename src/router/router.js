@@ -24,6 +24,16 @@ const router = createRouter({
             component: () => import("@/views/MyOrder.vue"),
         },
         {
+            path: "/contact",
+            name: "Liên hệ",
+            component: () => import("@/views/Contact.vue"),
+        },
+        {
+            path: "/introduce",
+            name: "Giới thiệu",
+            component: () => import("@/views/Introduce.vue"),
+        },
+        {
             path: "/",
             name: "home",
             component: HomeView,

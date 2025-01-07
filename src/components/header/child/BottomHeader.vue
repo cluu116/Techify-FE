@@ -101,7 +101,7 @@ onMounted(async () => {
                 >
                   <a
                       class="nav-link p-[0] font-Poppins leading-[28px] text-[15px] font-medium text-[#3d4750] tracking-[0.03rem] block"
-                      href="#"
+                      href="/contact"
                   >Liên Hệ</a
                   >
                 </li>
@@ -110,7 +110,7 @@ onMounted(async () => {
                 >
                   <a
                       class="nav-link p-[0] font-Poppins leading-[28px] text-[15px] font-medium text-[#3d4750] tracking-[0.03rem] block"
-                      href="#"
+                      href="/introduce"
                   >Giới Thiệu</a
                   >
                 </li>
