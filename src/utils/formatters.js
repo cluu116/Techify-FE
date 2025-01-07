@@ -1,6 +1,6 @@
 export const formatCurrency = (value) => {
   if (!value && value !== 0) return "0đ";
-  return `${value.toLocaleString("vi-VN")}đ`;
+  return `${value.toLocaleString("vi-VN")} VNĐ`;
 };
 
 export const formatDate = (dateString) => {

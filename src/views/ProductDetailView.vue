@@ -68,17 +68,17 @@
         <h1 class="text-xl font-semibold">{{ detailProduct?.name }}</h1>
         <div class="flex items-center">
       <span class="bb-pro-rating flex items-center">
-        <i
-            v-for="i in Math.floor(detailProduct?.avgRating || 0)"
-            :key="i"
-            class="ri-star-fill text-[15px] mr-[3px] leading-[18px] text-[#fea99a]"
-        ></i>
-        <i
-            v-for="i in 5 - Math.floor(detailProduct?.avgRating || 0)"
-            :key="'empty' + i"
-            class="ri-star-line text-[15px] mr-[3px] leading-[18px] text-[#777]"
-        ></i>
-      </span>
+  <template v-for="i in 5" :key="i">
+    <i
+        :class="[
+        detailProduct?.avgRating >= i ? 'ri-star-fill' :
+        detailProduct?.avgRating >= i - 0.5 ? 'ri-star-half-line' : 'ri-star-line',
+        'text-[15px] mr-[3px] leading-[18px]',
+        detailProduct?.avgRating >= i - 0.5 ? 'text-[#fea99a]' : 'text-[#777]'
+      ]"
+    ></i>
+  </template>
+</span>
           <span class="font-semibold ml-2">{{ detailProduct?.avgRating?.toFixed(1) || 'N/A' }}</span>
         </div>
       </div>
@@ -105,6 +105,10 @@
       <div class="mt-2 text-sm text-gray-500">
         <label class="text-gray-500">Tình trạng: </label>
         <span class="text-green-500">{{ detailProduct?.status }}</span>
+      </div>
+      <div class="mt-2 text-sm text-gray-500">
+        <label class="text-gray-500">Hiện còn: </label>
+        <span class="text-blue-500">{{ detailProduct?.availableQuantity || 0 }} sản phẩm</span>
       </div>
 
       <!-- Options -->
@@ -169,7 +173,7 @@
               v-model.number="quantity"
               @input="validateQuantity"
               min="1"
-              :max="detailProduct?.inventoryQuantity"
+              :max="detailProduct?.availableQuantity"
           />
           <button
               class="px-3 py-2 text-gray-600 hover:bg-gray-100 focus:outline-none"
@@ -528,17 +532,17 @@
                         {{ product.category.name }}
                       </router-link>
                       <span class="bb-pro-rating">
-                <i
-                    v-for="i in product.avgRating"
-                    :key="i"
-                    class="ri-star-fill float-left text-[15px] mr-[3px] leading-[18px] text-[#fea99a]"
-                ></i>
-                <i
-                    v-for="i in 5 - product.avgRating"
-                    :key="'empty' + i"
-                    class="ri-star-line float-left text-[15px] mr-[3px] leading-[18px] text-[#777]"
-                ></i>
-              </span>
+  <template v-for="i in 5" :key="i">
+    <i
+        :class="[
+        product.avgRating >= i ? 'ri-star-fill' :
+        product.avgRating >= i - 0.5 ? 'ri-star-half-line' : 'ri-star-line',
+        'float-left text-[15px] mr-[3px] leading-[18px]',
+        product.avgRating >= i - 0.5 ? 'text-[#fea99a]' : 'text-[#777]'
+      ]"
+    ></i>
+  </template>
+</span>
                     </div>
                     <h4 class="bb-pro-title mb-[8px] text-[16px] leading-[18px]">
                       <router-link
@@ -593,7 +597,7 @@ import {ref, computed, nextTick, watch} from 'vue';
 import {useRoute} from "vue-router";
 import {onMounted} from "vue";
 import api from "@/services/ApiService";
-import {addToCart} from "@/services/CartService.js";
+import {addToCart, getCart} from "@/services/CartService.js";
 import {useToast} from "primevue/usetoast";
 import getImageUrl from "@/utils/ImageUtils";
 import {formatCurrency} from "@/utils/formatters";
@@ -690,8 +694,8 @@ const canScrollRight = computed(() => {
 const validateQuantity = () => {
   if (quantity.value < 1) {
     quantity.value = 1;
-  } else if (quantity.value > detailProduct.value.inventoryQuantity) {
-    quantity.value = detailProduct.value.inventoryQuantity;
+  } else if (quantity.value > detailProduct.value.availableQuantity) {
+    quantity.value = detailProduct.value.availableQuantity;
   }
 };
 const decreaseQuantity = () => {
@@ -701,7 +705,7 @@ const decreaseQuantity = () => {
 };
 
 const increaseQuantity = () => {
-  if (quantity.value < detailProduct.value.inventoryQuantity) {
+  if (quantity.value < detailProduct.value.availableQuantity) {
     quantity.value++;
   }
 };
@@ -854,6 +858,18 @@ const fetchProductDetail = async () => {
     detailProduct.value.colors = JSON.parse(detailProduct.value.colors);
     detailProduct.value.attributes = JSON.parse(detailProduct.value.attributes);
     selectedImage.value = detailProduct.value.thumbnail;
+
+    if (detailProduct.value.availableQuantity <= 0 && detailProduct.value.status !== 2) {
+      try {
+        await api.put(`product/${detailProduct.value.id}/status`, null, {
+          params: {
+            status: 2
+          }
+        });
+      } catch (updateError) {
+        console.error("Error updating product status:", updateError);
+      }
+    }
   } catch (error) {
     console.error("Error fetching product details:", error);
     toast.add({
@@ -878,34 +894,80 @@ const hasSizes = computed(() => {
   return parsedSizes.value && parsedSizes.value.length > 0;
 });
 
+const getCurrentCartQuantity = (productId, color, size) => {
+  const cart = getCart().value;
+  const cartItem = cart.find(item =>
+      item.productId === productId &&
+      item.color === color &&
+      (size === null || size === '' || item.size === size)
+  );
+  return cartItem ? cartItem.quantity : 0;
+};
+
 const handleAddToCart = () => {
-  if (!selectedColor.value) {
+  try {
+    if (!selectedColor.value) {
+      throw new Error("Vui lòng chọn màu sắc");
+    }
+
+    if (hasSizes.value && !selectedSize.value) {
+      throw new Error("Vui lòng chọn kích thước");
+    }
+
+    if (!detailProduct.value || !detailProduct.value.id) {
+      throw new Error("Thông tin sản phẩm không hợp lệ");
+    }
+
+    if (quantity.value <= 0) {
+      throw new Error("Số lượng sản phẩm phải lớn hơn 0");
+    }
+
+    // Kiểm tra số lượng hiện có trong giỏ hàng
+    const currentCartQuantity = getCurrentCartQuantity(
+        detailProduct.value.id,
+        selectedColor.value,
+        selectedSize.value
+    );
+    const totalQuantity = currentCartQuantity + quantity.value;
+
+    if (totalQuantity > detailProduct.value.availableQuantity) {
+      const remainingQuantity = detailProduct.value.availableQuantity - currentCartQuantity;
+      if (remainingQuantity <= 0) {
+        toast.add({
+          severity: 'warn',
+          summary: 'Hết hàng',
+          detail: 'Sản phẩm đã hết hàng',
+          life: 3000
+        });
+      } else {
+        toast.add({
+          severity: 'warn',
+          summary: 'Số lượng hạn chế',
+          detail: `Chỉ còn ${remainingQuantity} sản phẩm trong kho`,
+          life: 3000
+        });
+      }
+      return;
+    }
+
+    // Nếu số lượng hợp lệ, thêm vào giỏ hàng
+    addToCart(detailProduct.value.id, quantity.value, toast, selectedColor.value, selectedSize.value);
+
+    toast.add({
+      severity: "success",
+      summary: "Thành công",
+      detail: "Sản phẩm đã được thêm vào giỏ hàng",
+      life: 3000,
+    });
+  } catch (error) {
+    console.error("Error adding to cart:", error);
     toast.add({
       severity: "error",
       summary: "Lỗi",
-      detail: "Vui lòng chọn màu sắc",
+      detail: error.message || "Có lỗi xảy ra khi thêm vào giỏ hàng",
       life: 3000,
     });
-    return;
   }
-
-  if (hasSizes.value && !selectedSize.value) {
-    toast.add({
-      severity: "error",
-      summary: "Lỗi",
-      detail: "Vui lòng chọn kích thước",
-      life: 3000,
-    });
-    return;
-  }
-
-  addToCart(detailProduct.value.id, quantity.value, toast, selectedColor.value, selectedSize.value);
-  toast.add({
-    severity: "success",
-    summary: "Thành công",
-    detail: "Sản phẩm đã được thêm vào giỏ hàng",
-    life: 3000,
-  });
 };
 
 const selectImage = (image) => {

@@ -1,6 +1,10 @@
 <template>
   <div class="order-success-container">
-    <div v-if="orderId" class="order-success-content">
+    <div v-if="loading" class="loading-indicator">
+      <i class="pi pi-spin pi-spinner" style="font-size: 2rem"></i>
+      <p>Đang xử lý đơn hàng...</p>
+    </div>
+    <div v-else-if="orderId" class="order-success-content">
       <i class="pi pi-check-circle" style="font-size: 5rem; color: #4caf50;"></i>
       <h1>Đặt hàng thành công!</h1>
       <p class="order-id">Mã đơn hàng của bạn là: <strong>{{ orderId }}</strong></p>
@@ -13,7 +17,7 @@
     </div>
     <div v-else class="error-message">
       <i class="pi pi-exclamation-triangle" style="font-size: 3rem; color: #f44336;"></i>
-      <p>Không tìm thấy thông tin đơn hàng.</p>
+      <p>{{ errorMessage || 'Không tìm thấy thông tin đơn hàng.' }}</p>
     </div>
   </div>
 </template>
@@ -33,30 +37,63 @@ export default {
     const toast = useToast();
     const router = useRouter();
     const orderId = ref(null);
+    const loading = ref(true);
+    const errorMessage = ref('');
+
+    const updateProductQuantities = async (orderId) => {
+      try {
+        const response = await api.get(`order_detail/${orderId}`);
+        const orderItems = response.data;
+
+        for (const item of orderItems) {
+          const productResponse = await api.get(`product/${item.productId}`);
+          const currentAvailableQuantity = productResponse.data.availableQuantity;
+
+          const newQuantity = currentAvailableQuantity - item.quantity;
+
+          // Cập nhật số lượng mới
+          await api.put(`product/AvailableQuantity/${item.productId}`, null, {
+            params: {
+              quantity: newQuantity
+            }
+          });
+        }
+
+        console.log('Đã cập nhật số lượng sản phẩm trong kho');
+      } catch (error) {
+        console.error('Lỗi khi cập nhật số lượng sản phẩm:', error);
+        throw error;
+      }
+    };
 
     onMounted(async () => {
-      orderId.value = sessionStorage.getItem('currentOrderId');
-      if (!orderId.value) {
+      try {
+        orderId.value = sessionStorage.getItem('currentOrderId');
+        if (!orderId.value) {
+          throw new Error('Không tìm thấy thông tin đơn hàng.');
+        }
+
+        await api.put(`order/${orderId.value}/status/1`, {status: 1});
+        await updateProductQuantities(orderId.value);
+        clearCart();
+
         toast.add({
-          severity: 'error',
-          summary: 'Lỗi',
-          detail: 'Không tìm thấy thông tin đơn hàng.',
+          severity: 'success',
+          summary: 'Thành công',
+          detail: 'Đơn hàng đã được xử lý thành công.',
           life: 3000
         });
-        return;
-      }
-
-      try {
-        await api.put(`order/${orderId.value}/status/1`, {status: 1});
-        clearCart();
       } catch (error) {
         console.error('Lỗi khi xử lý đơn hàng:', error);
+        errorMessage.value = error.message || 'Có lỗi xảy ra khi xử lý đơn hàng.';
         toast.add({
           severity: 'error',
           summary: 'Lỗi',
-          detail: 'Có lỗi xảy ra khi xử lý đơn hàng.',
+          detail: errorMessage.value,
           life: 3000
         });
+      } finally {
+        loading.value = false;
       }
     });
 
@@ -70,6 +107,8 @@ export default {
 
     return {
       orderId,
+      loading,
+      errorMessage,
       viewOrderDetails,
       continueShopping
     };
@@ -121,5 +160,10 @@ h1 {
 .error-message {
   text-align: center;
   color: #f44336;
+}
+
+.loading-indicator {
+  text-align: center;
+  color: #666;
 }
 </style>

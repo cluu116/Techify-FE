@@ -14,6 +14,7 @@ const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
     routes: [
         {
+<<<<<<< HEAD
             path: "/user-profile",
             name: "Thông tin",
             component: () => import("@/views/UserProfile.vue"),
@@ -34,6 +35,8 @@ const router = createRouter({
             component: () => import("@/views/Introduce.vue"),
         },
         {
+=======
+>>>>>>> 8930b52631494172189a6340faf04fda9ae792d2
             path: "/",
             name: "home",
             component: HomeView,
@@ -93,6 +96,17 @@ const router = createRouter({
                     component: () =>
                         import("@/components/admin/voucher_admin/AddVoucher.vue"),
                 },
+                {
+                    path: "/admin/voucher/edit/:id",
+                    name: "EditVoucher",
+                    component: () =>
+                        import("@/components/admin/voucher_admin/EditVoucher.vue"),
+                },
+                {
+                    path: "/admin/promotions",
+                    name: "PromotionsAdmin",
+                    component: () => import("@/views/admin/PromotionsAdmin.vue"),
+                },
             ],
         },
         {
@@ -134,7 +148,19 @@ const router = createRouter({
             path: '/payment-result',
             name: 'Trạng thái thanh toán',
             component: PaymentResult
-        }
+        },
+        {
+            path: "/user-profile",
+            name: "Thông tin",
+            component: () => import("@/views/UserProfile.vue"),
+            meta: { requiresAuth: true }
+        },
+        {
+            path: "/my-order",
+            name: "Đơn mua",
+            component: () => import("@/views/MyOrder.vue"),
+            meta: { requiresAuth: true }
+        },
     ],
     scrollBehavior(to, from, savedPosition) {
         if (savedPosition) {
@@ -146,19 +172,22 @@ const router = createRouter({
 });
 router.beforeEach(async (to, from, next) => {
     const requiresAdmin = to.matched.some(record => record.meta.requiresAdmin);
+    const requiresAuth = to.matched.some(record => record.meta.requiresAuth);
 
-    if (requiresAdmin) {
-        if (!authService.isAuthenticated || !authService.role) {
-            try {
-                await authService.getUserInfo();
-            } catch (error) {
-                console.error("Error fetching user info:", error);
-                next({name: 'home'});
-                return;
-            }
+    if (requiresAdmin || requiresAuth) {
+        try {
+            await authService.getUserInfo();
+        } catch (error) {
+            console.error("Error fetching user info:", error);
         }
-        if (authService.role !== 'ADMIN') {
-            next({name: 'home'});
+
+        if (requiresAdmin && authService.role !== 'ADMIN') {
+            next({ name: 'home' });
+            return;
+        }
+
+        if (requiresAuth && !authService.isAuthenticated) {
+            next({ name: 'home' });
             return;
         }
     }

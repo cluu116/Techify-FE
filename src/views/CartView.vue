@@ -20,7 +20,7 @@ const products = ref([]);
 const checkProductStock = async (productId) => {
   try {
     const response = await api.get(`/product/${productId}`);
-    return response.data.inventoryQuantity;
+    return response.data.availableQuantity;
   } catch (error) {
     console.error("Error fetching product stock:", error);
     toast.add({
@@ -45,7 +45,7 @@ const loadCartData = async () => {
     const productPromises = cartItems.value.map(async (item) => {
       try {
         const res = await api.get(`product/${item.productId}`);
-        return { ...res.data, cartItem: item, stock: res.data.inventoryQuantity };
+        return { ...res.data, cartItem: item, stock: res.data.availableQuantity };
       } catch (error) {
         console.error(`Error fetching product ${item.productId}:`, error);
         toast.add({

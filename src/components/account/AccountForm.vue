@@ -30,7 +30,7 @@ const login = async () => {
       window.location.reload();
     }, 500);
   } else {
-    showError(toast, data.value);
+    showError(toast, "Đăng Nhập Thất Bại");
   }
 }
 const handleSubmit = () => {

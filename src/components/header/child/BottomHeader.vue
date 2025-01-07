@@ -6,7 +6,6 @@ const categories = ref([]);
 onMounted(async () => {
   const response = await api.get("parent_category/with-children");
   categories.value = response.data;
-  console.log(categories.value);
 });
 </script>
 <template>

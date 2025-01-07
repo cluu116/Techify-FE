@@ -1,12 +1,13 @@
 <script setup>
-import { ref } from "vue";
-import { useToast } from "primevue/usetoast";
-import { useRouter } from "vue-router";
+import {onMounted, ref} from "vue";
+import {useToast} from "primevue/usetoast";
+import {useRoute, useRouter} from "vue-router";
 import api from "@/services/ApiService.js";
-import { showError, showSuccess } from "@/services/ToastService.js";
+import {showError, showSuccess} from "@/services/ToastService.js";
 
 const toast = useToast();
 const router = useRouter();
+const route = useRoute();
 
 const voucher = ref({
   id: "",
@@ -17,6 +18,23 @@ const voucher = ref({
   usageLimit: null,
   startDate: null,
   endDate: null,
+});
+
+onMounted(async () => {
+  const voucherId = route.params.id;
+  if (voucherId) {
+    try {
+      const response = await api.get(`voucher/${voucherId}`);
+      voucher.value = {
+        ...response.data,
+        startDate: new Date(response.data.startDate).toISOString().slice(0, 16),
+        endDate: new Date(response.data.endDate).toISOString().slice(0, 16),
+      };
+    } catch (error) {
+      showError(toast, "Không thể tải thông tin voucher");
+      await router.push("/admin/voucher");
+    }
+  }
 });
 
 const validateVoucher = () => {
@@ -68,23 +86,22 @@ const validateVoucher = () => {
 };
 
 const checkVoucherIdExists = async (id) => {
-    const response = await api.get(`voucher/check/${id}`);
-    return response.data; // Voucher tồn tại
+  const response = await api.get(`voucher/check/${id}`);
+  return response.data; // Voucher tồn tại
 };
 
-const addVoucher = async () => {
+const updateVoucher = async () => {
   try {
     if (!validateVoucher()) {
       return;
     }
-
     const voucherExists = await checkVoucherIdExists(voucher.value.id);
     if (voucherExists === null) {
       showError(toast, "Không thể kiểm tra mã voucher. Vui lòng thử lại.");
       return;
     }
-    if (voucherExists) {
-      showError(toast, "Mã giảm giá đã tồn tại!");
+    if (voucherExists === false) {
+      showError(toast, "Mã giảm giá không tồn tại!");
       return;
     }
     const formattedVoucher = {
@@ -97,36 +114,37 @@ const addVoucher = async () => {
       usageLimit: voucher.value.usageLimit ? parseInt(voucher.value.usageLimit) : null,
     };
 
-    const response = await api.post("voucher", formattedVoucher);
-    if (response.status === 200 || response.status === 201) {
-      showSuccess(toast, "Thêm phiếu giảm giá thành công");
+    const response = await api.put(`voucher/${voucher.value.id}`, formattedVoucher);
+    if (response.status === 200) {
+      showSuccess(toast, "Cập nhật phiếu giảm giá thành công");
       await router.push("/admin/voucher");
     }
   } catch (error) {
-    showError(toast, "Thêm phiếu giảm giá thất bại: " + (error.response?.data?.message || error.message));
+    showError(toast, "Cập nhật phiếu giảm giá thất bại: " + (error.response?.data?.message || error.message));
   }
 };
 </script>
 
 
 <template>
-  <Toast />
+  <Toast/>
   <div class="card p-4">
-    <h2 class="text-2xl font-bold mb-4">Thêm Phiếu Giảm Giá</h2>
-    <form @submit.prevent="addVoucher" class="space-y-6">
+    <h2 class="text-2xl font-bold mb-4">Cập Nhật Phiếu Giảm Giá</h2>
+    <form @submit.prevent="updateVoucher" class="space-y-6">
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="space-y-2">
           <label for="voucherId" class="block text-gray-700 font-medium">
             Mã Giảm Giá
           </label>
           <input
-            id="voucherId"
-            v-model="voucher.id"
-            type="text"
-            required
-            maxlength="20"
-            placeholder="Nhập mã giảm giá"
-            class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              id="voucherId"
+              v-model="voucher.id"
+              type="text"
+              required
+              maxlength="20"
+              placeholder="Nhập mã giảm giá"
+              class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              disabled
           />
         </div>
 
@@ -135,10 +153,10 @@ const addVoucher = async () => {
             Loại Giảm Giá
           </label>
           <select
-            id="discountType"
-            v-model="voucher.discountType"
-            required
-            class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              id="discountType"
+              v-model="voucher.discountType"
+              required
+              class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             <option :value="false">Số Tiền</option>
             <option :value="true">Phần Trăm</option>
@@ -151,14 +169,14 @@ const addVoucher = async () => {
           </label>
           <div class="relative">
             <input
-              id="discountValue"
-              v-model="voucher.discountValue"
-              type="number"
-              required
-              :min="0"
-              :max="voucher.discountType ? 100 : null"
-              placeholder="Nhập giá trị giảm"
-              class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                id="discountValue"
+                v-model="voucher.discountValue"
+                type="number"
+                required
+                :min="0"
+                :max="voucher.discountType ? 100 : null"
+                placeholder="Nhập giá trị giảm"
+                class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             <span class="absolute right-3 top-2 text-gray-500">
               {{ voucher.discountType ? "%" : "đ" }}
@@ -172,13 +190,13 @@ const addVoucher = async () => {
           </label>
           <div class="relative">
             <input
-              id="minOrder"
-              v-model="voucher.minOrder"
-              type="number"
-              required
-              min="0"
-              placeholder="Nhập giá trị đơn hàng tối thiểu"
-              class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                id="minOrder"
+                v-model="voucher.minOrder"
+                type="number"
+                required
+                min="0"
+                placeholder="Nhập giá trị đơn hàng tối thiểu"
+                class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             <span class="absolute right-3 top-2 text-gray-500">đ</span>
           </div>
@@ -190,12 +208,12 @@ const addVoucher = async () => {
           </label>
           <div class="relative">
             <input
-              id="maxDiscount"
-              v-model="voucher.maxDiscount"
-              type="number"
-              min="0"
-              placeholder="Nhập giá trị giảm tối đa (để trống nếu không giới hạn)"
-              class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                id="maxDiscount"
+                v-model="voucher.maxDiscount"
+                type="number"
+                min="0"
+                placeholder="Nhập giá trị giảm tối đa (để trống nếu không giới hạn)"
+                class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             <span class="absolute right-3 top-2 text-gray-500">đ</span>
           </div>
@@ -206,12 +224,12 @@ const addVoucher = async () => {
             Số Lượng
           </label>
           <input
-            id="usageLimit"
-            v-model="voucher.usageLimit"
-            type="number"
-            min="0"
-            placeholder="Nhập số lượng (để trống nếu không giới hạn)"
-            class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              id="usageLimit"
+              v-model="voucher.usageLimit"
+              type="number"
+              min="0"
+              placeholder="Nhập số lượng (để trống nếu không giới hạn)"
+              class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
 
@@ -220,11 +238,11 @@ const addVoucher = async () => {
             Ngày Bắt Đầu
           </label>
           <input
-            id="startDate"
-            v-model="voucher.startDate"
-            type="datetime-local"
-            required
-            class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              id="startDate"
+              v-model="voucher.startDate"
+              type="datetime-local"
+              required
+              class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
 
@@ -233,28 +251,28 @@ const addVoucher = async () => {
             Ngày Kết Thúc
           </label>
           <input
-            id="endDate"
-            v-model="voucher.endDate"
-            type="datetime-local"
-            required
-            class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              id="endDate"
+              v-model="voucher.endDate"
+              type="datetime-local"
+              required
+              class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
       </div>
 
       <div class="flex justify-end gap-4 mt-6">
         <button
-          type="button"
-          @click="router.push('/admin/voucher')"
-          class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+            type="button"
+            @click="router.push('/admin/voucher')"
+            class="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
         >
           Hủy
         </button>
         <button
-          type="submit"
-          class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+            type="submit"
+            class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
         >
-          Thêm
+          Cập Nhật
         </button>
       </div>
     </form>
@@ -267,6 +285,7 @@ input[type="number"]::-webkit-outer-spin-button {
   -webkit-appearance: none;
   margin: 0;
 }
+
 input[type="number"] {
   -moz-appearance: textfield;
 }

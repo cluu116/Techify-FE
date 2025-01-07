@@ -19,6 +19,28 @@ const toast = useToast();
 const order = ref(null);
 const orderDetails = ref([]);
 
+const updateInventory = async () => {
+  try {
+    for (const item of orderDetails.value) {
+      const currentProductResponse = await api.get(`product/${item.productId}`);
+      const currentInventoryQuantity = currentProductResponse.data.inventoryQuantity;
+
+      const newQuantity = currentInventoryQuantity - item.quantity;
+
+      await api.put(`product/InventoryQuantity/${item.productId}`, null, {
+        params: {
+          quantity: newQuantity
+        }
+      });
+    }
+
+    showSuccess(toast, "Đã cập nhật số lượng sản phẩm trong kho");
+  } catch (error) {
+    console.error("Lỗi khi cập nhật số lượng sản phẩm trong kho:", error);
+    showError(toast, "Lỗi khi cập nhật số lượng sản phẩm trong kho");
+  }
+};
+
 const getOrderDetail = async () => {
   try {
     const [orderResponse, detailsResponse] = await Promise.all([
@@ -39,6 +61,11 @@ const updateOrderStatus = async (newStatus) => {
       `order/${order.value.id}/status/${newStatus}`
     );
     order.value = response.data;
+
+    if (newStatus === 3) {
+      await updateInventory();
+    }
+
     showSuccess(toast, "Cập nhật trạng thái đơn hàng thành công");
   } catch (error) {
     showError(toast, "Lỗi khi cập nhật trạng thái đơn hàng");
