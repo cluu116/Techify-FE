@@ -9,7 +9,6 @@ import {
   formatDate,
   getOrderStatusName,
   getOrderStatusSeverity,
-  calculateFinalTotal,
 } from "@/utils/formatters.js";
 import getImageUrl from "@/utils/ImageUtils.js";
 
@@ -158,7 +157,7 @@ onMounted(getOrderDetail);
             >
               <div class="text-blue-600 font-medium mb-2">Tổng Thanh Toán</div>
               <div class="text-3xl font-bold text-blue-700">
-                {{ formatCurrency(calculateFinalTotal(order.total, order.disCountValue)) }}
+                {{ formatCurrency(order.total) }}
               </div>
             </div>
           </div>

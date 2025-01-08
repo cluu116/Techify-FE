@@ -386,19 +386,37 @@ export default {
     const handleAvatarUpload = async (event) => {
       const file = event.target.files[0];
       if (file) {
+        if (file.size > 1 * 1024 * 1024) {
+          showError(toast, "Kích thước file quá lớn. Vui lòng chọn file nhỏ hơn 1MB.");
+          return;
+        }
+
         try {
           const formData = new FormData();
-          formData.append('avatar', file);
+          formData.append('image', file);
 
-          const response = await api.post('/users/upload-avatar', formData, {
+          const uploadResponse = await api.post('/upload', formData, {
             headers: {
               'Content-Type': 'multipart/form-data'
             }
           });
 
-          if (response.status === 200) {
-            userInfo.value.avatar = response.data.avatarUrl;
-            showSuccess(toast, "Ảnh đại diện đã được cập nhật thành công");
+          if (uploadResponse.status === 200) {
+            const newAvatarUrl = uploadResponse.data.url;
+
+            const updateResponse = await api.put('/auth/update-Image', {
+              avatar: newAvatarUrl
+            });
+
+            if (updateResponse.status === 200) {
+              userInfo.value.avatar = newAvatarUrl;
+              authService.avatar = newAvatarUrl;
+              showSuccess(toast, "Ảnh đại diện đã được cập nhật thành công");
+            } else {
+              throw new Error("Không thể cập nhật ảnh đại diện");
+            }
+          } else {
+            throw new Error("Tải lên ảnh không thành công");
           }
         } catch (error) {
           console.error("Error uploading avatar:", error);

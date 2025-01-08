@@ -38,8 +38,3 @@ export const getOrderStatusSeverity = (status) => {
   if (status === 5) return "secondary";
   return "secondary";
 };
-
-export const calculateFinalTotal = (total, discount) => {
-  if (!total) return 0;
-  return total - (discount || 0);
-};

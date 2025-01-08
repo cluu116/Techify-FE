@@ -7,12 +7,11 @@ import {
   formatDate,
   getOrderStatusName,
   getOrderStatusSeverity,
-  calculateFinalTotal,
 } from "@/utils/formatters.js";
 
 const router = useRouter();
 const orders = ref([]);
-const productImages = ref([]); // Array to store product images
+const productImages = ref([]);
 
 const getOrders = async () => {
   try {
@@ -31,7 +30,6 @@ const getOrderProducts = async () => {
     );
     const responses = await Promise.all(promises);
 
-    // Collect all product images
     productImages.value = responses.flatMap((response) =>
       response.data.map((detail) => detail.productThumbnail)
     );
@@ -60,10 +58,7 @@ onMounted(getOrders);
           <template #body="slotProps">
             {{
               formatCurrency(
-                calculateFinalTotal(
-                  slotProps.data.total,
-                  slotProps.data.disCountValue
-                )
+                  slotProps.data.total
               )
             }}
           </template>

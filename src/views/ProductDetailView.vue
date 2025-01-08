@@ -983,7 +983,7 @@ onMounted(async () => {
 });
 </script>
 <style>
-body {
+html, body {
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
@@ -998,8 +998,8 @@ body {
   opacity: 1;
 }
 
-body::-webkit-scrollbar {
-  width: 0;
+html::-webkit-scrollbar, body::-webkit-scrollbar {
+  display: none;
 }
 
 

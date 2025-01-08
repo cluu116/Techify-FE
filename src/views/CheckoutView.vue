@@ -1,5 +1,5 @@
 <script setup>
-import {ref, onMounted, computed} from "vue";
+import {ref, onMounted, computed, watch} from "vue";
 import {useToast} from "primevue/usetoast";
 import {useRouter} from "vue-router";
 import api from "@/services/ApiService";
@@ -25,7 +25,62 @@ const selectedPaymentMethod = ref(null);
 const selectedTransportVendor = ref(null);
 const transportVendors = ref([]);
 const voucher = ref("");
+const voucherDiscount = ref(0);
 
+const validateVoucher = async () => {
+  if (!voucher.value) {
+    voucherDiscount.value = 0;
+    return;
+  }
+
+  try {
+    const response = await api.post('voucher/apply', null, {
+      params: {
+        voucherId: voucher.value,
+        orderTotal: subtotal.value
+      }
+    });
+
+    const result = response.data;
+
+    if (!isNaN(parseFloat(result))) {
+      voucherDiscount.value = parseFloat(result);
+      toast.add({
+        severity: "success",
+        summary: "Thành công",
+        detail: "Mã giảm giá đã được áp dụng.",
+        life: 3000,
+      });
+    } else {
+      voucherDiscount.value = 0;
+      toast.add({
+        severity: "error",
+        summary: "Lỗi",
+        detail: result,
+        life: 3000,
+      });
+    }
+  } catch (error) {
+    console.error("Lỗi khi áp dụng voucher:", error);
+    voucherDiscount.value = 0;
+    toast.add({
+      severity: "error",
+      summary: "Lỗi",
+      detail: "Không thể áp dụng mã giảm giá. Vui lòng thử lại sau.",
+      life: 3000,
+    });
+  }
+};
+
+watch(voucher, () => {
+  if (!voucher.value) {
+    voucherDiscount.value = 0;
+  }
+});
+
+const discount = computed(() => {
+  return voucherDiscount.value;
+});
 // Cart data
 const cartItems = ref([]);
 const products = ref([]);
@@ -135,19 +190,12 @@ const shipping = computed(() => {
   return vendor ? vendor.basePrice : 0;
 });
 
-const discount = computed(() => {
-  // Add voucher discount calculation logic here
-  return 0;
-});
-
 const total = computed(() => {
   return subtotal.value + shipping.value - discount.value;
 });
 
-// Handle checkout submission
 const handleCheckout = async () => {
   try {
-    // Kiểm tra xem đã chọn phương thức thanh toán và vận chuyển chưa
     if (!selectedPaymentMethod.value || !selectedTransportVendor.value) {
       toast.add({
         severity: "warn",
@@ -174,6 +222,7 @@ const handleCheckout = async () => {
         id: selectedTransportVendor.value
       },
       status: 0,
+      voucher: voucher.value ? { id: voucher.value } : null,
     };
 
     const orderResponse = await api.post('order', orderData);
@@ -260,6 +309,7 @@ onMounted(async () => {
 </script>
 
 <template>
+  <Toast/>
   <div class="min-h-screen bg-gray-50 py-10">
     <div class="container max-w-[1200px] mx-auto px-4">
       <h1 class="text-4xl font-bold mb-12 text-gray-800 text-center">Thanh Toán</h1>
@@ -389,6 +439,7 @@ onMounted(async () => {
                     placeholder="Nhập mã giảm giá"
                 />
                 <button
+                    @click="validateVoucher"
                     class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors duration-200"
                 >
                   Áp dụng

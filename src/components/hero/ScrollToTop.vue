@@ -2,7 +2,7 @@
   <button
       v-show="showButton"
       @click="scrollToTop"
-      class="fixed bottom-5 right-5 bg-primary text-white p-3 rounded-full shadow-lg hover:bg-primary-dark transition-all duration-300 z-50"
+      class="fixed bottom-5 left-5 bg-primary text-white p-3 rounded-full shadow-lg hover:bg-primary-dark transition-all duration-300 z-50"
   >
     <i class="ri-arrow-up-line text-xl"></i>
   </button>
