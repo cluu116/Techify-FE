@@ -2,6 +2,7 @@ import {computed, reactive} from "vue";
 import api from "@/services/ApiService.js";
 
 const token = computed(() => localStorage.getItem("token"));
+const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 export const authService = reactive({
     id: "",
@@ -12,20 +13,24 @@ export const authService = reactive({
     district: null,
     ward: null,
     address: null,
-    altAddress: null,
     phone: null,
-    altPhone: null,
     avatar: null,
+    dob: null,
+    gender: null,
+    citizenId: null,
     isAuthenticated: computed(() => {
         const token = localStorage.getItem("token");
         return !!token && token !== "undefined";
     }),
 
-    async getUserInfo() {
+    async getUserInfo(retryCount = 0) {
+        const MAX_RETRIES = 3;
+        const DELAY_MS = 1000;
         if (this.isAuthenticated) {
             try {
                 const response = await api.get("/auth");
                 const data = response.data;
+                console.log(data)
                 this.id = data.id;
                 this.userFullName = data.fullName;
                 this.email = data.email;
@@ -34,22 +39,23 @@ export const authService = reactive({
                 this.district = data.district;
                 this.ward = data.ward;
                 this.address = data.address;
-                this.altAddress = data.altAddress;
                 this.phone = data.phone;
-                this.altPhone = data.altPhone;
                 this.avatar = data.avatar;
+                this.dob = data.dob;
+                this.gender = data.gender;
+                this.citizenId = data.citizenId;
+
                 return data;
             } catch (error) {
                 console.error("Error fetching user info:", error);
                 if (error.response) {
                     console.error("Response data:", error.response.data);
                     console.error("Response status:", error.response.status);
-                    if (error.response.status === 400) {
-                        // Token có thể đã hết hạn hoặc không hợp lệ
+                    if (error.response.status === 400 && retryCount < MAX_RETRIES) {
                         console.log("Attempting to refresh token...");
                         await this.refreshToken();
-                        // Thử lại việc lấy thông tin người dùng
-                        return this.getUserInfo();
+                        await delay(DELAY_MS);
+                        return this.getUserInfo(retryCount + 1);
                     }
                 }
                 throw error;
@@ -72,7 +78,6 @@ export const authService = reactive({
             console.log("Token refreshed successfully");
         } catch (error) {
             console.error("Failed to refresh token:", error);
-            // Xóa token và chuyển hướng đến trang đăng nhập
             this.logout();
             window.location.href = "/login";
         }
