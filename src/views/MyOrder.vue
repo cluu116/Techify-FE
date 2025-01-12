@@ -202,12 +202,14 @@ export default {
 
     const orderTabs = [
       { label: 'Tất cả', value: 'all' },
+      { label: 'Chờ thanh toán', value: 0 },
       { label: 'Chờ xác nhận', value: 1 },
       { label: 'Đang giao', value: 2 },
       { label: 'Đã giao', value: 3 },
       { label: 'Đã hủy', value: 4 },
       { label: 'Hoàn thành', value: 5 },
     ];
+
 
     const tableHeaders = [
       'Mã đơn hàng',
@@ -283,6 +285,7 @@ export default {
 
     const getStatusLabel = (status) => {
       switch (status) {
+        case 0: return 'Chờ thanh toán';
         case 1: return 'Chờ xác nhận';
         case 2: return 'Đang giao';
         case 3: return 'Đã giao';
@@ -294,6 +297,7 @@ export default {
 
     const getStatusClass = (status) => {
       switch (status) {
+        case 0: return 'bg-orange-100 text-orange-800';
         case 1: return 'bg-yellow-100 text-yellow-800';
         case 2: return 'bg-blue-100 text-blue-800';
         case 3: return 'bg-green-100 text-green-800';
@@ -306,6 +310,7 @@ export default {
     const getTabIcon = (value) => {
       switch (value) {
         case 'all': return 'fas fa-list';
+        case 0: return 'fas fa-wallet';
         case 1: return 'fas fa-clock';
         case 2: return 'fas fa-truck';
         case 3: return 'fas fa-check-circle';

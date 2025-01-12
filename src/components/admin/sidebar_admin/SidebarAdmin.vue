@@ -21,7 +21,7 @@
     </div>
 
     <!-- Navigation section -->
-    <nav class="flex-grow overflow-y-auto">
+    <nav class="flex-grow overflow-y-auto custom-scrollbar">
       <ul class="px-4 py-2 space-y-1">
         <li v-for="(item, index) in menuItems" :key="index" class="menu-item">
           <template v-if="item.submenu">
@@ -76,15 +76,6 @@ const user = ref(null);
 const openSubmenus = ref({});
 
 const menuItems = [
-  {
-    key: 'stats',
-    label: 'Thống Kê',
-    icon: 'pi pi-chart-line',
-    submenu: [
-      {label: 'Doanh Thu', icon: 'pi pi-chart-bar', to: '/admin/stats/revenue'},
-      {label: 'Đơn Hàng', icon: 'pi pi-shopping-cart', to: '/admin/stats/orders'}
-    ]
-  },
   {label: 'Trang Chủ', icon: 'pi pi-home', to: '/admin/home'},
   {label: 'Quản Lý Danh Mục', icon: 'pi pi-list', to: '/admin/category'},
   {label: 'Quản Lý Sản Phẩm', icon: 'pi pi-box', to: '/admin/product'},
@@ -160,5 +151,19 @@ const toggleSubmenu = (key) => {
 .submenu-leave-to {
   opacity: 0;
   max-height: 0;
+}
+.custom-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+nav {
+  height: calc(100vh - 200px);
 }
 </style>

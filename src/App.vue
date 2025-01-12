@@ -3,7 +3,6 @@
   <RouterView></RouterView>
   <Footer v-if="!isAdminPage"/>
   <ScrollToTop v-if="!isAdminPage"/>
-  <FptAiChatBot />
 </template>
 <script setup>
 import Header from "@/components/header/Header.vue";

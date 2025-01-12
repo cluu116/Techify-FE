@@ -85,6 +85,24 @@ const router = createRouter({
                     component: () => import("@/views/admin/PromotionsAdmin.vue"),
                 },
                 {
+                    path: "/admin/promotion/add",
+                    name: "AddPromotion",
+                    component: () =>
+                        import("@/components/admin/promotion_admin/AddPromotion.vue"),
+                },
+                {
+                    path: "/admin/promotion/edit/:id",
+                    name: "EditPromotion",
+                    component: () =>
+                        import("@/components/admin/promotion_admin/EditPromotion.vue"),
+                },
+                {
+                    path: "/admin/promotion/:id/apply-to-products",
+                    name: "ApplyToProducts",
+                    component: () =>
+                        import("@/components/admin/promotion_admin/ApplyToProducts.vue"),
+                },
+                {
                     path: "/admin/paymentMethod",
                     name: "PaymentMethodAdmin",
                     component: () => import("@/views/admin/PaymentMethodAdmin.vue"),
