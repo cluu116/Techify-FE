@@ -22,21 +22,18 @@ const updateInventory = async () => {
   try {
     for (const item of orderDetails.value) {
       const currentProductResponse = await api.get(`product/${item.productId}`);
-      const currentInventoryQuantity = currentProductResponse.data.inventoryQuantity;
+      const currentAvailableQuantity = currentProductResponse.data.availableQuantity;
 
-      const newQuantity = currentInventoryQuantity - item.quantity;
+      const newQuantity = currentAvailableQuantity + item.quantity;
 
-      await api.put(`product/InventoryQuantity/${item.productId}`, null, {
+      await api.put(`product/AvailableQuantity/${item.productId}`, null, {
         params: {
           quantity: newQuantity
         }
       });
     }
-
-    showSuccess(toast, "Đã cập nhật số lượng sản phẩm trong kho");
   } catch (error) {
     console.error("Lỗi khi cập nhật số lượng sản phẩm trong kho:", error);
-    showError(toast, "Lỗi khi cập nhật số lượng sản phẩm trong kho");
   }
 };
 
@@ -61,7 +58,7 @@ const updateOrderStatus = async (newStatus) => {
     );
     order.value = response.data;
 
-    if (newStatus === 3) {
+    if (newStatus === 4) {
       await updateInventory();
     }
 
@@ -96,14 +93,14 @@ onMounted(getOrderDetail);
         />
         <Button
             v-if="order.status === 2"
-            label="Hoàn Thành"
+            label="Giao hàng thành công"
             icon="pi pi-check-circle"
             severity="success"
             @click="updateOrderStatus(3)"
             class="p-button-raised transition-all duration-200 hover:shadow-md"
         />
         <Button
-            v-if="order.status === 0 || order.status === 1"
+            v-if="order.status === 0 || order.status === 1 || order.status === 2"
             label="Hủy"
             icon="pi pi-times"
             severity="danger"

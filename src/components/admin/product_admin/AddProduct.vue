@@ -38,6 +38,15 @@ const handleFileChange = async (event) => {
 }
 const addProduct = async () => {
   try {
+    const productId = document.getElementById('productId').value;
+
+    // Kiểm tra xem ID đã tồn tại chưa
+    const checkIdResponse = await api.get(`product/check/${productId}`);
+    if (checkIdResponse.data.exists) {
+      showError(toast, "Mã sản phẩm đã tồn tại. Vui lòng chọn mã khác.");
+      return;
+    }
+
     const imageUploadPromises = images.value.map(image => {
       const formData = new FormData();
       formData.append("image", image.file);

@@ -66,6 +66,28 @@ export default {
       }
     };
 
+    const updateVoucherQuantity = async (orderId) => {
+      try {
+        const orderResponse = await api.get(`order/${orderId}`);
+        const order = orderResponse.data;
+
+        if (order.voucherId) {
+          const voucherResponse = await api.get(`voucher/${order.voucherId}`);
+          const voucher = voucherResponse.data;
+
+          if (voucher.usageLimit > 0) {
+            const newQuantity = voucher.usageLimit - 1;
+            // Sử dụng PATCH request với endpoint mới
+            await api.patch(`voucher/${order.voucherId}/quantity?quantity=${newQuantity}`);
+            console.log('Đã cập nhật số lượng voucher');
+          }
+        }
+      } catch (error) {
+        console.error('Lỗi khi cập nhật số lượng voucher:', error);
+        throw error;
+      }
+    };
+
     onMounted(async () => {
       try {
         orderId.value = sessionStorage.getItem('currentOrderId');
@@ -73,16 +95,26 @@ export default {
           throw new Error('Không tìm thấy thông tin đơn hàng.');
         }
 
-        await api.put(`order/${orderId.value}/status/1`, {status: 1});
-        await updateProductQuantities(orderId.value);
-        clearCart();
+        // Kiểm tra xem đơn hàng đã được xử lý chưa
+        const isProcessed = localStorage.getItem(`order_${orderId.value}_processed`);
+        if (!isProcessed) {
+          await api.put(`order/${orderId.value}/status/1`, {status: 1});
+          await updateProductQuantities(orderId.value);
+          await updateVoucherQuantity(orderId.value);
+          clearCart();
 
-        toast.add({
-          severity: 'success',
-          summary: 'Thành công',
-          detail: 'Đơn hàng đã được xử lý thành công.',
-          life: 3000
-        });
+          // Đánh dấu đơn hàng đã được xử lý
+          localStorage.setItem(`order_${orderId.value}_processed`, 'true');
+
+          toast.add({
+            severity: 'success',
+            summary: 'Thành công',
+            detail: 'Đơn hàng đã được xử lý thành công.',
+            life: 3000
+          });
+        } else {
+          console.log('Đơn hàng đã được xử lý trước đó');
+        }
       } catch (error) {
         console.error('Lỗi khi xử lý đơn hàng:', error);
         errorMessage.value = error.message || 'Có lỗi xảy ra khi xử lý đơn hàng.';

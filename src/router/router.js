@@ -84,6 +84,16 @@ const router = createRouter({
                     name: "PromotionsAdmin",
                     component: () => import("@/views/admin/PromotionsAdmin.vue"),
                 },
+                {
+                    path: "/admin/paymentMethod",
+                    name: "PaymentMethodAdmin",
+                    component: () => import("@/views/admin/PaymentMethodAdmin.vue"),
+                },
+                {
+                    path: "/admin/transportVendor",
+                    name: "TransportVendorAdmin",
+                    component: () => import("@/views/admin/TransportVendorAdmin.vue"),
+                },
             ],
         },
         {
