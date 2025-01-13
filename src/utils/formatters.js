@@ -38,3 +38,11 @@ export const getOrderStatusSeverity = (status) => {
   if (status === 5) return "secondary";
   return "secondary";
 };
+export const calculateFinalTotal = (orderDetails) => {
+  if (!orderDetails || !orderDetails.length) return 0;
+
+  return orderDetails
+    .map((detail) => detail.total || 0) // Giả định rằng mỗi detail có trường `total`
+    .reduce((sum, total) => sum + total, 0);
+};
+

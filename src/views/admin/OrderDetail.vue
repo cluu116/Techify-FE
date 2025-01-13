@@ -1,14 +1,15 @@
 <script setup>
-import {onMounted, ref} from "vue";
-import {useRoute, useRouter} from "vue-router";
-import {useToast} from "primevue/usetoast";
+import { onMounted, ref } from "vue";
+import { useRoute, useRouter } from "vue-router";
+import { useToast } from "primevue/usetoast";
 import api from "@/services/ApiService.js";
-import {showError, showSuccess} from "@/services/ToastService.js";
+import { showError, showSuccess } from "@/services/ToastService.js";
 import {
   formatCurrency,
   formatDate,
   getOrderStatusName,
   getOrderStatusSeverity,
+  //calculateFinalTotal,
 } from "@/utils/formatters.js";
 import getImageUrl from "@/utils/ImageUtils.js";
 
@@ -22,21 +23,18 @@ const updateInventory = async () => {
   try {
     for (const item of orderDetails.value) {
       const currentProductResponse = await api.get(`product/${item.productId}`);
-      const currentInventoryQuantity = currentProductResponse.data.inventoryQuantity;
+      const currentAvailableQuantity = currentProductResponse.data.availableQuantity;
 
-      const newQuantity = currentInventoryQuantity - item.quantity;
+      const newQuantity = currentAvailableQuantity + item.quantity;
 
-      await api.put(`product/InventoryQuantity/${item.productId}`, null, {
+      await api.put(`product/AvailableQuantity/${item.productId}`, null, {
         params: {
           quantity: newQuantity
         }
       });
     }
-
-    showSuccess(toast, "Đã cập nhật số lượng sản phẩm trong kho");
   } catch (error) {
     console.error("Lỗi khi cập nhật số lượng sản phẩm trong kho:", error);
-    showError(toast, "Lỗi khi cập nhật số lượng sản phẩm trong kho");
   }
 };
 
@@ -57,11 +55,11 @@ const getOrderDetail = async () => {
 const updateOrderStatus = async (newStatus) => {
   try {
     const response = await api.put(
-        `order/${order.value.id}/status/${newStatus}`
+      `order/${order.value.id}/status/${newStatus}`
     );
     order.value = response.data;
 
-    if (newStatus === 3) {
+    if (newStatus === 4) {
       await updateInventory();
     }
 
@@ -78,7 +76,9 @@ onMounted(getOrderDetail);
   <Toast />
   <div class="card p-4 shadow-lg rounded-lg" v-if="order">
     <!-- Header Section -->
-    <div class="flex justify-between items-center mb-6 pb-4 border-b border-gray-200">
+    <div
+      class="flex justify-between items-center mb-6 pb-4 border-b border-gray-200"
+    >
       <div>
         <h2 class="text-3xl font-bold mb-2">Đơn Hàng #{{ order.id }}</h2>
         <span class="text-gray-500">
@@ -88,27 +88,29 @@ onMounted(getOrderDetail);
       </div>
       <div class="flex gap-3">
         <Button
-            v-if="order.status === 1"
-            label="Xác nhận"
-            icon="pi pi-send"
-            @click="updateOrderStatus(2)"
-            class="p-button-raised p-button-info transition-all duration-200 hover:shadow-md"
+          v-if="order.status === 1"
+          label="Xác nhận"
+          icon="pi pi-send"
+          @click="updateOrderStatus(2)"
+          class="p-button-raised p-button-info transition-all duration-200 hover:shadow-md"
         />
         <Button
+
             v-if="order.status === 2"
-            label="Hoàn Thành"
+            label="Giao hàng thành công"
             icon="pi pi-check-circle"
             severity="success"
             @click="updateOrderStatus(3)"
             class="p-button-raised transition-all duration-200 hover:shadow-md"
         />
         <Button
-            v-if="order.status === 0 || order.status === 1"
+            v-if="order.status === 0 || order.status === 1 || order.status === 2"
             label="Hủy"
             icon="pi pi-times"
             severity="danger"
             @click="updateOrderStatus(4)"
             class="p-button-raised transition-all duration-200 hover:shadow-md"
+          
         />
       </div>
     </div>
@@ -119,9 +121,9 @@ onMounted(getOrderDetail);
         <div class="bg-white rounded-xl p-4 shadow-md">
           <div class="flex items-center gap-4">
             <Tag
-                :value="getOrderStatusName(order.status)"
-                :severity="getOrderStatusSeverity(order.status)"
-                class="text-lg px-4 py-2"
+              :value="getOrderStatusName(order.status)"
+              :severity="getOrderStatusSeverity(order.status)"
+              class="text-lg px-4 py-2"
             />
             <span class="text-gray-600">
               <i class="pi pi-clock mr-2"></i>
@@ -135,7 +137,9 @@ onMounted(getOrderDetail);
       <div>
         <Panel header="Thông Tin Đơn Hàng" class="h-full shadow-md">
           <div class="space-y-4">
-            <div class="bg-gray-100 p-4 rounded-lg hover:shadow-md transition-shadow duration-300">
+            <div
+              class="bg-gray-100 p-4 rounded-lg hover:shadow-md transition-shadow duration-300"
+            >
               <div class="text-gray-600 mb-2">Phí Vận Chuyển</div>
               <div class="text-xl font-semibold">
                 {{ formatCurrency(order.shipPrice || 0) }}
@@ -143,8 +147,8 @@ onMounted(getOrderDetail);
             </div>
 
             <div
-                v-if="order.disCountValue"
-                class="bg-gray-100 p-4 rounded-lg hover:shadow-md transition-shadow duration-300"
+              v-if="order.disCountValue"
+              class="bg-gray-100 p-4 rounded-lg hover:shadow-md transition-shadow duration-300"
             >
               <div class="text-gray-600 mb-2">Giảm Giá</div>
               <div class="text-xl font-semibold text-red-500">
@@ -153,11 +157,19 @@ onMounted(getOrderDetail);
             </div>
 
             <div
-                class="bg-blue-50 p-5 rounded-xl border-2 border-blue-500 hover:shadow-lg transition-shadow duration-300"
+              class="bg-blue-50 p-5 rounded-xl border-2 border-blue-500 hover:shadow-lg transition-shadow duration-300"
             >
               <div class="text-blue-600 font-medium mb-2">Tổng Thanh Toán</div>
               <div class="text-3xl font-bold text-blue-700">
+
                 {{ formatCurrency(order.total) }}
+
+                <!-- {{
+                  formatCurrency(
+                    calculateFinalTotal(order.total, order.disCountValue)
+                  )
+                }} -->
+
               </div>
             </div>
           </div>
@@ -167,7 +179,9 @@ onMounted(getOrderDetail);
       <!-- Customer Info Panel -->
       <div>
         <Panel header="Thông Tin Khách Hàng" class="h-full shadow-md">
-          <div class="bg-gray-100 p-4 rounded-lg hover:shadow-md transition-shadow duration-300">
+          <div
+            class="bg-gray-100 p-4 rounded-lg hover:shadow-md transition-shadow duration-300"
+          >
             <div class="space-y-3">
               <div class="flex items-center">
                 <i class="pi pi-user mr-3 text-blue-500"></i>
@@ -194,18 +208,18 @@ onMounted(getOrderDetail);
       <div class="col-span-full">
         <Panel header="Chi Tiết Sản Phẩm" class="shadow-md">
           <DataTable
-              :value="orderDetails"
-              responsiveLayout="scroll"
-              class="p-datatable-sm"
-              stripedRows
+            :value="orderDetails"
+            responsiveLayout="scroll"
+            class="p-datatable-sm"
+            stripedRows
           >
             <Column header="Sản Phẩm" style="min-width: 300px">
               <template #body="slotProps">
                 <div class="flex items-center gap-4">
                   <img
-                      class="w-16 h-16 object-cover rounded-lg shadow-sm"
-                      :src="getImageUrl(slotProps.data.productThumbnail)"
-                      :alt="slotProps.data.productName"
+                    class="w-16 h-16 object-cover rounded-lg shadow-sm"
+                    :src="getImageUrl(slotProps.data.productThumbnail)"
+                    :alt="slotProps.data.productName"
                   />
                   <div>
                     <div class="font-medium mb-1">

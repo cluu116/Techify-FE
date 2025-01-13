@@ -14,6 +14,26 @@ const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
     routes: [
         {
+            path: "/user-profile",
+            name: "Thông tin",
+            component: () => import("@/views/UserProfile.vue"),
+        },
+        {
+            path: "/my-order",
+            name: "Đơn mua",
+            component: () => import("@/views/MyOrder.vue"),
+        },
+        {
+            path: "/contact",
+            name: "Liên hệ",
+            component: () => import("@/views/Contact.vue"),
+        },
+        {
+            path: "/introduce",
+            name: "Giới thiệu",
+            component: () => import("@/views/Introduce.vue"),
+        },
+        {
             path: "/",
             name: "home",
             component: HomeView,
