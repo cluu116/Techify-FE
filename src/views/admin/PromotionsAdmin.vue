@@ -78,7 +78,7 @@ const paginatePromotions = computed(() => {
 const deletePromotion = async (id) => {
   showConfirmDelete(confirm, async function () {
     try {
-      await api.delete(`promotions/${id}`);
+      await api.delete(`promotions/delete/${id}`);
       await getPromotions();
       showSuccess(toast, "Xóa khuyến mãi thành công");
     } catch (error) {
@@ -91,6 +91,9 @@ const editPromotion = (promotion) => {
   router.push(`/admin/promotion/edit/${promotion.id}`);
 };
 
+const applyToProducts = (promotion) => {
+  router.push(`/admin/promotion/${promotion.id}/apply-to-products`);
+};
 onMounted(getPromotions);
 </script>
 
@@ -105,6 +108,7 @@ onMounted(getPromotions);
             icon="pi pi-plus"
             class="p-button-primary"
             @click="router.push('/admin/promotion/add')"
+            v-tooltip.top="'Thêm mới đợt giảm giá'"
         />
       </template>
       <template #end>
@@ -173,16 +177,26 @@ onMounted(getPromotions);
       <Column header="Thao Tác">
         <template #body="slotProps">
           <Button
+              icon="pi pi-tag"
+              rounded
+              class="mr-2"
+              severity="success"
+              @click="applyToProducts(slotProps.data)"
+              v-tooltip.top="'Áp dụng cho sản phẩm'"
+          />
+          <Button
               icon="pi pi-pencil"
               rounded
               class="mr-2"
               @click="editPromotion(slotProps.data)"
+              v-tooltip.top="'Sửa đợt giảm giá'"
           />
           <Button
               icon="pi pi-trash"
               rounded
               severity="danger"
               @click="deletePromotion(slotProps.data.id)"
+              v-tooltip.top="'Xóa đợt giảm giá'"
           />
         </template>
       </Column>

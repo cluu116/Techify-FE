@@ -212,7 +212,7 @@ const handleCheckout = async () => {
         id: user.value.id
       },
       staff: {
-        id: "NV01"
+        id: "NV001"
       },
       shippingAddress: user.value.address,
       paymentMethod: {

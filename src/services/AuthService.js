@@ -30,7 +30,6 @@ export const authService = reactive({
             try {
                 const response = await api.get("/auth");
                 const data = response.data;
-                console.log(data)
                 this.id = data.id;
                 this.userFullName = data.fullName;
                 this.email = data.email;
@@ -47,7 +46,6 @@ export const authService = reactive({
 
                 return data;
             } catch (error) {
-                console.error("Error fetching user info:", error);
                 if (error.response) {
                     console.error("Response data:", error.response.data);
                     console.error("Response status:", error.response.status);

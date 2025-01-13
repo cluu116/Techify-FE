@@ -14,13 +14,13 @@ const currentUser = ref({});
 const router = useRouter();
 
 
-const orders = ref([]); // Danh sách đơn hàng
-const productImages = ref([]); // Hình ảnh sản phẩm
-const selectedInvoice = ref(null); // Lưu thông tin hóa đơn được chọn
-const showInvoice = ref(false); // Hiển thị giao diện hóa đơn
-const invoiceDetails = ref([]); // Lưu chi tiết sản phẩm của hóa đơn
-const shippingFee = ref(0); // Phí vận chuyển
-const totalAmount = ref(0); // Tổng cộng
+const orders = ref([]); 
+const productImages = ref([]); 
+const selectedInvoice = ref(null); 
+const showInvoice = ref(false); 
+const invoiceDetails = ref([]); 
+const shippingFee = ref(0); 
+const totalAmount = ref(0); 
 
 
 // Lấy danh sách đơn hàng
@@ -30,9 +30,9 @@ const getOrders = async () => {
 
     orders.value = response.data.map((order) => {
       const shouldShowInvoiceButton =
-        (order.paymentMethodName === "Chuyển khoản ngân hàng" &&
+        (order.paymentMethodName === "Thanh toán qua VNPay" &&
           ["Đang Giao", "Hoàn Thành"].includes(getOrderStatusName(order.status))) ||
-        (order.paymentMethodName === "Thanh toán tiền mặt" &&
+        (order.paymentMethodName === "Thanh toán khi nhận hàng" &&
           getOrderStatusName(order.status) === "Hoàn Thành");
 
       // Lấy giá trị từ localStorage nếu đã lưu, nếu không thì gán mới
@@ -125,7 +125,7 @@ const viewInvoice = async (orderId) => {
 
     selectedInvoice.value = {
       id: orderData.id,
-      createdAt: order.invoiceCreatedAt, // Sử dụng thời gian lưu trữ từ danh sách orders
+      createdAt: order.invoiceCreatedAt, 
       customerName: orderData.customerName || invoiceResponse.data.customerName,
       customerEmail:
         invoiceResponse.data.customerEmail || orderData.customerEmail,
@@ -378,6 +378,9 @@ onMounted(getOrders);
           <div class="mt-4 text-right">
             <p>
               <strong>Phí vận chuyển:</strong> {{ formatCurrency(selectedInvoice.shippingFee || 0)  }}
+            </p>
+            <p>
+              <strong>Giảm giá:</strong> -{{ formatCurrency(selectedInvoice.discount || 0)  }}
             </p>
             <p><strong>Tổng cộng:</strong> {{ formatCurrency(selectedInvoice.total || 0) }}</p>
           </div>
