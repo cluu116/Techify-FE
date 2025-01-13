@@ -66,14 +66,28 @@ const updatePromotion = async () => {
     };
 
     const response = await api.put(`promotions/update/${promotion.value.id}`, formattedPromotion);
-    if (response.status === 200) {
-      showSuccess(toast, "Cập nhật khuyến mãi thành công");
-      setTimeout(async () => {
-        await router.push("/admin/promotions");
-      }, 1500);
-    }
+
+    showSuccess(toast, response.data || "Cập nhật khuyến mãi thành công");
+    setTimeout(async () => {
+      await router.push("/admin/promotions");
+    }, 1500);
   } catch (error) {
-    showError(toast, "Cập nhật khuyến mãi thất bại: " + (error.response?.data?.message || error.message));
+    if (error.response) {
+      switch (error.response.status) {
+        case 400:
+          showError(toast, error.response.data || "Dữ liệu không hợp lệ");
+          break;
+        case 404:
+          showError(toast, "Không tìm thấy khuyến mãi");
+          break;
+        default:
+          showError(toast, error.response.data || "Cập nhật khuyến mãi thất bại");
+      }
+    } else if (error.request) {
+      showError(toast, "Không thể kết nối đến server");
+    } else {
+      showError(toast, "Có lỗi xảy ra khi cập nhật khuyến mãi");
+    }
   }
 };
 

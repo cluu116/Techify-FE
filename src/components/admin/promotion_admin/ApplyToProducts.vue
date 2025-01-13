@@ -10,6 +10,7 @@ import Button from 'primevue/button';
 import InputText from 'primevue/inputtext';
 import ProgressSpinner from 'primevue/progressspinner';
 import Avatar from 'primevue/avatar';
+import getImageUrl from "@/utils/ImageUtils.js";
 
 const route = useRoute();
 const router = useRouter();
@@ -20,6 +21,7 @@ const promotionDetails = ref(null);
 const products = ref([]);
 const selectedProducts = ref([]);
 const loading = ref(true);
+const tempSelectedProducts = ref([]);
 const filters = ref({
   global: { value: null, matchMode: 'contains' },
 });
@@ -33,18 +35,41 @@ const fetchPromotionDetails = async () => {
   }
 };
 
-const removeSelectedProduct = (product) => {
-  selectedProducts.value = selectedProducts.value.filter(p => p.id !== product.id);
+const fetchSelectedProducts = async () => {
+  try {
+    loading.value = true;
+    const response = await api.get(`product-promotions/promotion/${promotionId.value}`);
+    selectedProducts.value = response.data.map(product => ({
+      ...product,
+      sellPrice: parseFloat(product.sellPrice),
+      thumbnail: product.thumbnail
+    }));
+  } catch (error) {
+    selectedProducts.value = [];
+  } finally {
+    loading.value = false;
+  }
+};
+
+const removeSelectedProduct = async (product) => {
+  try {
+    await api.delete(`product-promotions/promotion/${promotionId.value}/product/${product.productId}`);
+    await fetchSelectedProducts();
+    await fetchProducts();
+    showSuccess(toast, 'Đã xóa sản phẩm khỏi khuyến mãi');
+  } catch (error) {
+    showError(toast, 'Lỗi khi xóa sản phẩm khỏi khuyến mãi');
+  }
 };
 
 const fetchProducts = async () => {
   try {
     loading.value = true;
-    const response = await api.get('product');
+    const response = await api.get(`product-promotions/promotion/${promotionId.value}/not-included`);
     products.value = response.data.map(product => ({
       ...product,
-      price: parseFloat(product.price),
-      thumbnail: JSON.parse(product.thumbnail).url
+      sellPrice: parseFloat(product.sellPrice),
+      thumbnail: product.thumbnail
     }));
   } catch (error) {
     showError(toast, 'Lỗi khi tải danh sách sản phẩm');
@@ -55,14 +80,32 @@ const fetchProducts = async () => {
 
 const applyPromotion = async () => {
   try {
-    const productIds = selectedProducts.value.map(product => product.id);
+    const productIds = tempSelectedProducts.value.map(product => product.productId);
+    console.log('Product IDs being sent:', productIds);
     await api.post(`promotions/${promotionId.value}/products`, productIds);
-    showSuccess(toast, 'Áp dụng khuyến mãi thành công');
-    setTimeout(async () => {
-      await router.push('/admin/promotions');
-        },1500);
+    selectedProducts.value = [...selectedProducts.value, ...tempSelectedProducts.value];
+    tempSelectedProducts.value = [];
+    showSuccess(toast, 'Sản phẩm đã được thêm vào khuyến mãi thành công');
+    await fetchProducts();
+    await fetchSelectedProducts();
   } catch (error) {
-    showError(toast, 'Lỗi khi áp dụng khuyến mãi');
+    if (error.response) {
+      switch (error.response.status) {
+        case 400:
+          showError(toast, 'Dữ liệu không hợp lệ');
+          break;
+        case 404:
+          showError(toast, 'Không tìm thấy khuyến mãi hoặc sản phẩm');
+          break;
+        case 409:
+          showError(toast, 'Xung đột dữ liệu');
+          break;
+        default:
+          showError(toast, 'Lỗi khi thêm sản phẩm vào khuyến mãi');
+      }
+    } else {
+      showError(toast, 'Lỗi khi thêm sản phẩm vào khuyến mãi');
+    }
   }
 };
 
@@ -71,14 +114,14 @@ const filteredProducts = computed(() => {
     const searchTerm = filters.value.global.value.toLowerCase();
     return products.value.filter(product =>
         product.name.toLowerCase().includes(searchTerm) ||
-        product.id.toString().includes(searchTerm)
+        product.productId.toString().includes(searchTerm)
     );
   }
   return products.value;
 });
 
 onMounted(async () => {
-  await Promise.all([fetchPromotionDetails(), fetchProducts()]);
+  await Promise.all([fetchPromotionDetails(), fetchProducts(), fetchSelectedProducts()]);
 });
 </script>
 
@@ -98,13 +141,13 @@ onMounted(async () => {
     </div>
   </div>
   <div v-if="selectedProducts.length > 0" class="mb-4">
-    <h3 class="text-lg font-semibold mb-2">Sản phẩm đã chọn</h3>
+    <h3 class="text-lg font-semibold mb-2">Sản phẩm đã được áp dụng</h3>
     <DataTable :value="selectedProducts" responsiveLayout="scroll" class="p-datatable-sm">
-      <Column field="id" header="ID" :sortable="true"></Column>
+      <Column field="productId" header="ID" :sortable="true"></Column>
       <Column header="Sản Phẩm" :sortable="true" sortField="name">
         <template #body="slotProps">
           <div class="flex align-items-center">
-            <Avatar :image="slotProps.data.thumbnail" shape="circle" size="small" class="mr-2"/>
+            <Avatar :image="getImageUrl(slotProps.data.thumbnail)" shape="circle" size="small" class="mr-2"/>
             <span>{{ slotProps.data.name }}</span>
           </div>
         </template>
@@ -133,22 +176,23 @@ onMounted(async () => {
       </span>
     </div>
     <DataTable
-        v-model:selection="selectedProducts"
+        v-model:selection="tempSelectedProducts"
         :value="filteredProducts"
-        dataKey="id"
+        dataKey="productId"
         :paginator="true"
         :rows="10"
         :rowsPerPageOptions="[5, 10, 20]"
         paginatorTemplate="FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink CurrentPageReport RowsPerPageDropdown"
         responsiveLayout="scroll"
         :filters="filters"
+        selectionMode="multiple"
     >
       <Column selectionMode="multiple" headerStyle="width: 3rem"></Column>
-      <Column field="id" header="ID" :sortable="true"></Column>
+      <Column field="productId" header="ID" :sortable="true"></Column>
       <Column header="Sản Phẩm" :sortable="true" sortField="name" style="width: 30%;">
         <template #body="slotProps">
           <div class="flex align-items-center">
-            <Avatar :image="slotProps.data.thumbnail" shape="circle" size="large" class="mr-2"/>
+            <Avatar :image="getImageUrl(slotProps.data.thumbnail)" shape="circle" size="large" class="mr-2"/>
             <span class="mt-3">{{ slotProps.data.name }}</span>
           </div>
         </template>
@@ -160,8 +204,8 @@ onMounted(async () => {
       </Column>
     </DataTable>
     <div class="mt-4 flex justify-between items-center">
-      <p>Đã chọn {{ selectedProducts.length }} sản phẩm</p>
-      <Button label="Áp dụng khuyến mãi" icon="pi pi-check" @click="applyPromotion" :disabled="selectedProducts.length === 0" />
+      <p>Đã chọn {{ tempSelectedProducts.length }} sản phẩm</p>
+      <Button label="Áp dụng khuyến mãi" icon="pi pi-check" @click="applyPromotion" :disabled="tempSelectedProducts.length === 0" />
     </div>
   </div>
 </template>

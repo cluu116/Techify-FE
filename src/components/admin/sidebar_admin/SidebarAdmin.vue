@@ -69,22 +69,29 @@
 <script setup>
 import {RouterLink} from "vue-router";
 import {authService} from "@/services/AuthService.js";
-import {onMounted, ref} from "vue";
+import {computed, onMounted, ref} from "vue";
 import router from "@/router/router.js";
 
 const user = ref(null);
 const openSubmenus = ref({});
 
-const menuItems = [
-  {label: 'Trang Chủ', icon: 'pi pi-home', to: '/admin/home'},
-  {label: 'Quản Lý Danh Mục', icon: 'pi pi-list', to: '/admin/category'},
-  {label: 'Quản Lý Sản Phẩm', icon: 'pi pi-box', to: '/admin/product'},
-  {label: 'Quản Lý Đơn Hàng', icon: 'pi pi-shopping-cart', to: '/admin/order'},
-  {label: 'Quản Lý Phiếu Giảm Giá', icon: 'pi pi-ticket', to: '/admin/voucher'},
-  {label: 'Quản Lý Chương Trình Khuyến Mại', icon: 'pi pi-percentage', to: '/admin/promotions'},
-  {label: 'Quản Lý Phương Thức Thanh Toán', icon: 'pi pi-credit-card', to: '/admin/paymentMethod'},
-  {label: 'Quản Lý Đơn Vị Vận Chuyển', icon: 'pi pi-truck', to: '/admin/transportVendor'}
-];
+const isAdmin = computed(() => authService.role === 'ADMIN');
+const menuItems = computed(() => [
+  // Các mục menu chỉ dành cho admin
+  ...(isAdmin.value ? [
+    { label: 'Trang Chủ', icon: 'pi pi-home', to: '/admin/home' },
+    { label: 'Quản Lý Nhân Viên', icon: 'pi pi-users', to: '/admin/users' },
+    { label: 'Quản Lý Phương Thức Thanh Toán', icon: 'pi pi-credit-card', to: '/admin/paymentMethod' }
+  ] : []),
+
+  // Các mục menu chung cho cả admin và nhân viên
+  { label: 'Quản Lý Danh Mục', icon: 'pi pi-list', to: '/admin/category' },
+  { label: 'Quản Lý Sản Phẩm', icon: 'pi pi-box', to: '/admin/product' },
+  { label: 'Quản Lý Đơn Hàng', icon: 'pi pi-shopping-cart', to: '/admin/order' },
+  { label: 'Quản Lý Phiếu Giảm Giá', icon: 'pi pi-ticket', to: '/admin/voucher' },
+  { label: 'Quản Lý Chương Trình Khuyến Mại', icon: 'pi pi-percentage', to: '/admin/promotions' },
+  { label: 'Quản Lý Đơn Vị Vận Chuyển', icon: 'pi pi-truck', to: '/admin/transportVendor' },
+]);
 
 const fetchUserData = async () => {
   if (authService.isAuthenticated) {

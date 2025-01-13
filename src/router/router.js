@@ -186,7 +186,7 @@ router.beforeEach(async (to, from, next) => {
             console.error("Error fetching user info:", error);
         }
 
-        if (requiresAdmin && authService.role !== 'ADMIN') {
+        if (requiresAdmin && !(authService.role === 'ADMIN' || authService.role === 'STAFF')) {
             next({ name: 'home' });
             return;
         }

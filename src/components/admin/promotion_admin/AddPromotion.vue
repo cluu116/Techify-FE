@@ -64,14 +64,23 @@ const addPromotion = async () => {
     };
 
     const response = await api.post("promotions/create", formattedPromotion);
+
     if (response.status === 201) {
-      showSuccess(toast, "Thêm khuyến mãi thành công");
+      showSuccess(toast, response.data || "Thêm khuyến mãi thành công");
       setTimeout(async () => {
         await router.push("/admin/promotions");
       }, 1500);
+    } else {
+      showError(toast, response.data || "Có lỗi xảy ra khi thêm khuyến mãi");
     }
   } catch (error) {
-    showError(toast, "Thêm khuyến mãi thất bại: " + (error.response?.data?.message || error.message));
+    if (error.response) {
+      showError(toast, error.response.data || "Thêm khuyến mãi thất bại");
+    } else if (error.request) {
+      showError(toast, "Không thể kết nối đến server");
+    } else {
+      showError(toast, "Có lỗi xảy ra khi thêm khuyến mãi");
+    }
   }
 };
 </script>
