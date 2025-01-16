@@ -25,7 +25,7 @@ export const authService = reactive({
 
     async getUserInfo(retryCount = 0) {
         const MAX_RETRIES = 3;
-        const DELAY_MS = 1000;
+        const DELAY_MS = 5000;
         if (this.isAuthenticated) {
             try {
                 const response = await api.get("/auth");
@@ -43,7 +43,7 @@ export const authService = reactive({
                 this.dob = data.dob;
                 this.gender = data.gender;
                 this.citizenId = data.citizenId;
-
+                console.log(data)
                 return data;
             } catch (error) {
                 if (error.response) {

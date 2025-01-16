@@ -130,7 +130,7 @@ export default {
     });
 
     const viewOrderDetails = () => {
-      router.push({name: 'OrderDetail', params: {id: orderId.value}});
+      router.push({ name: 'Đơn mua' });
     };
 
     const continueShopping = () => {

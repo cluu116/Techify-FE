@@ -14,7 +14,6 @@ const router = createRouter({
     history: createWebHistory(import.meta.env.BASE_URL),
     routes: [
         {
-<<<<<<< HEAD
             path: "/user-profile",
             name: "Thông tin",
             component: () => import("@/views/UserProfile.vue"),
@@ -35,8 +34,6 @@ const router = createRouter({
             component: () => import("@/views/Introduce.vue"),
         },
         {
-=======
->>>>>>> 8930b52631494172189a6340faf04fda9ae792d2
             path: "/",
             name: "home",
             component: HomeView,
@@ -106,6 +103,34 @@ const router = createRouter({
                     path: "/admin/promotions",
                     name: "PromotionsAdmin",
                     component: () => import("@/views/admin/PromotionsAdmin.vue"),
+                },
+                {
+                    path: "/admin/promotion/add",
+                    name: "AddPromotion",
+                    component: () =>
+                        import("@/components/admin/promotion_admin/AddPromotion.vue"),
+                },
+                {
+                    path: "/admin/promotion/edit/:id",
+                    name: "EditPromotion",
+                    component: () =>
+                        import("@/components/admin/promotion_admin/EditPromotion.vue"),
+                },
+                {
+                    path: "/admin/promotion/:id/apply-to-products",
+                    name: "ApplyToProducts",
+                    component: () =>
+                        import("@/components/admin/promotion_admin/ApplyToProducts.vue"),
+                },
+                {
+                    path: "/admin/paymentMethod",
+                    name: "PaymentMethodAdmin",
+                    component: () => import("@/views/admin/PaymentMethodAdmin.vue"),
+                },
+                {
+                    path: "/admin/transportVendor",
+                    name: "TransportVendorAdmin",
+                    component: () => import("@/views/admin/TransportVendorAdmin.vue"),
                 },
             ],
         },
@@ -181,7 +206,7 @@ router.beforeEach(async (to, from, next) => {
             console.error("Error fetching user info:", error);
         }
 
-        if (requiresAdmin && authService.role !== 'ADMIN') {
+        if (requiresAdmin && !(authService.role === 'ADMIN' || authService.role === 'STAFF')) {
             next({ name: 'home' });
             return;
         }

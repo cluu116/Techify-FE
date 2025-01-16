@@ -8,6 +8,8 @@ import {formatCurrency} from "@/utils/formatters";
 import getImageUrl from "@/utils/ImageUtils";
 import emailjs from "@emailjs/browser";
 import {authService} from "@/services/AuthService.js";
+import {getProvinces, getDistricts, getWards} from "vietnam-provinces";
+import {validateAddress} from "@/services/Validators.js";
 
 const toast = useToast();
 const router = useRouter();
@@ -26,6 +28,71 @@ const selectedTransportVendor = ref(null);
 const transportVendors = ref([]);
 const voucher = ref("");
 const voucherDiscount = ref(0);
+const provinces = ref(getProvinces());
+const districts = ref([]);
+const wards = ref([]);
+const selectedProvinceCode = ref(authService.province);
+const selectedDistrictCode = ref(authService.district);
+const selectedWardCode = ref(authService.ward);
+
+const updateDistricts = () => {
+  if (selectedProvinceCode.value) {
+    districts.value = getDistricts(selectedProvinceCode.value);
+    selectedDistrictCode.value = '';
+    selectedWardCode.value = '';
+    wards.value = [];
+  } else {
+    districts.value = [];
+    selectedDistrictCode.value = '';
+    selectedWardCode.value = '';
+    wards.value = [];
+  }
+};
+
+const updateWards = () => {
+  if (selectedDistrictCode.value) {
+    wards.value = getWards(selectedDistrictCode.value);
+    selectedWardCode.value = user.value.ward || '';
+  } else {
+    wards.value = [];
+    selectedWardCode.value = '';
+  }
+};
+
+watch(selectedProvinceCode, updateDistricts);
+watch(selectedDistrictCode, updateWards);
+
+const fullAddress = computed(() => {
+  const province = provinces.value.find(p => p.code === selectedProvinceCode.value);
+  const district = districts.value.find(d => d.code === selectedDistrictCode.value);
+  const ward = wards.value.find(w => w.code === selectedWardCode.value);
+
+  if (province && district && ward) {
+    return `${ward.name}, ${district.name}, ${province.name}`;
+  }
+  return '';
+});
+
+const validateCheckoutAddress = () => {
+  const errorMessage = validateAddress(
+      selectedProvinceCode.value,
+      selectedDistrictCode.value,
+      selectedWardCode.value,
+      user.value.address,
+      user.value.phone
+  );
+
+  if (errorMessage) {
+    toast.add({
+      severity: "error",
+      summary: "Lỗi",
+      detail: errorMessage,
+      life: 3000,
+    });
+    return false;
+  }
+  return true;
+};
 
 const validateVoucher = async () => {
   if (!voucher.value) {
@@ -196,6 +263,9 @@ const total = computed(() => {
 
 const handleCheckout = async () => {
   try {
+    if (!validateCheckoutAddress()) {
+      return;
+    }
     if (!selectedPaymentMethod.value || !selectedTransportVendor.value) {
       toast.add({
         severity: "warn",
@@ -212,9 +282,9 @@ const handleCheckout = async () => {
         id: user.value.id
       },
       staff: {
-        id: "NV001"
+        id: "ADM-001"
       },
-      shippingAddress: user.value.address,
+      shippingAddress: `${user.value.address}, ${fullAddress.value}`,
       paymentMethod: {
         id: selectedPaymentMethod.value
       },
@@ -290,6 +360,18 @@ const handleCheckout = async () => {
 onMounted(async () => {
   try {
     const response = await api.get("auth");
+    await authService.getUserInfo();
+    if (authService.province) {
+      selectedProvinceCode.value = authService.province;
+      updateDistricts();
+    }
+    if (authService.district) {
+      selectedDistrictCode.value = authService.district;
+      updateWards();
+    }
+    if (authService.ward) {
+      selectedWardCode.value = authService.ward;
+    }
     user.value = response.data;
     await loadCartData();
     await loadTransportVendors();
@@ -325,24 +407,16 @@ onMounted(async () => {
               </h2>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <label for="name" class="block text-gray-700 mb-2 font-medium">Họ và tên</label>
-                  <input
-                      id="name"
-                      v-model="user.fullName"
-                      type="text"
-                      class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition duration-200"
-                      placeholder="Nhập họ và tên"
-                  />
+                  <label class="block text-gray-700 mb-2 font-medium">Họ và tên</label>
+                  <div class="w-full p-3 bg-gray-100 border border-gray-300 rounded-lg text-gray-700">
+                    {{ user.fullName }}
+                  </div>
                 </div>
                 <div>
-                  <label for="email" class="block text-gray-700 mb-2 font-medium">Email</label>
-                  <input
-                      id="email"
-                      v-model="user.email"
-                      type="email"
-                      class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition duration-200"
-                      placeholder="Nhập email"
-                  />
+                  <label class="block text-gray-700 mb-2 font-medium">Email</label>
+                  <div class="w-full p-3 bg-gray-100 border border-gray-300 rounded-lg text-gray-700">
+                    {{ user.email }}
+                  </div>
                 </div>
                 <div>
                   <label for="phone" class="block text-gray-700 mb-2 font-medium">Số điện thoại</label>
@@ -354,6 +428,51 @@ onMounted(async () => {
                       placeholder="Nhập số điện thoại"
                   />
                 </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label for="province" class="block text-gray-700 mb-2 font-medium">Tỉnh/TP</label>
+                      <select
+                          id="province"
+                          v-model="selectedProvinceCode"
+                          @change="updateDistricts"
+                          class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition duration-200"
+                      >
+                        <option value="">Chọn Tỉnh/Thành phố</option>
+                        <option v-for="province in provinces" :key="province.code" :value="province.code">
+                          {{ province.name }}
+                        </option>
+                      </select>
+                    </div>
+                    <div>
+                      <label for="district" class="block text-gray-700 mb-2 font-medium">Quận/Huyện</label>
+                      <select
+                          id="district"
+                          v-model="selectedDistrictCode"
+                          @change="updateWards"
+                          :disabled="!selectedProvinceCode"
+                          class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition duration-200"
+                      >
+                        <option value="">Chọn Quận/Huyện</option>
+                        <option v-for="district in districts" :key="district.code" :value="district.code">
+                          {{ district.name }}
+                        </option>
+                      </select>
+                    </div>
+                    <div>
+                      <label for="ward" class="block text-gray-700 mb-2 font-medium">Phường/Xã</label>
+                      <select
+                          id="ward"
+                          v-model="selectedWardCode"
+                          :disabled="!selectedDistrictCode"
+                          class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition duration-200"
+                      >
+                        <option value="">Chọn Phường/Xã</option>
+                        <option v-for="ward in wards" :key="ward.code" :value="ward.code">
+                          {{ ward.name }}
+                        </option>
+                      </select>
+                    </div>
+                  </div>
                 <div class="md:col-span-2">
                   <label for="address" class="block text-gray-700 mb-2 font-medium">Địa chỉ giao hàng</label>
                   <textarea

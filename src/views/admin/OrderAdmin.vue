@@ -1,7 +1,7 @@
 <script setup>
-import { useRouter } from "vue-router";
+import {useRouter} from "vue-router";
 import api from "@/services/ApiService.js";
-import { onMounted, ref, nextTick } from "vue";
+import {onMounted, ref, nextTick} from "vue";
 import {
   formatCurrency,
   formatDate,
@@ -27,27 +27,27 @@ const getOrders = async () => {
 
     orders.value = response.data.map((order) => {
       const shouldShowInvoiceButton =
-        (order.paymentMethodName === "Thanh toán qua VNPay" &&
-          ["Đang Giao", "Hoàn Thành"].includes(getOrderStatusName(order.status))) ||
-        (order.paymentMethodName === "Thanh toán khi nhận hàng" &&
-          getOrderStatusName(order.status) === "Hoàn Thành");
+          (order.paymentMethodName === "Thanh toán qua VNPay" &&
+              ["Đang Giao", "Hoàn Thành"].includes(getOrderStatusName(order.status))) ||
+          (order.paymentMethodName === "Thanh toán khi nhận hàng" &&
+              getOrderStatusName(order.status) === "Hoàn Thành");
 
       // Lấy giá trị từ localStorage nếu đã lưu, nếu không thì gán mới
       const storedInvoiceCreatedAt = localStorage.getItem(
-        `invoiceCreatedAt_${order.id}`
+          `invoiceCreatedAt_${order.id}`
       );
 
       const invoiceCreatedAt = shouldShowInvoiceButton
-        ? storedInvoiceCreatedAt
-          ? new Date(storedInvoiceCreatedAt)
-          : new Date() // Ghi thời gian nếu chưa lưu
-        : null;
+          ? storedInvoiceCreatedAt
+              ? new Date(storedInvoiceCreatedAt)
+              : new Date() // Ghi thời gian nếu chưa lưu
+          : null;
 
       // Lưu vào localStorage nếu có thời gian tạo
       if (!storedInvoiceCreatedAt && invoiceCreatedAt) {
         localStorage.setItem(
-          `invoiceCreatedAt_${order.id}`,
-          invoiceCreatedAt.toISOString()
+            `invoiceCreatedAt_${order.id}`,
+            invoiceCreatedAt.toISOString()
         );
       }
 
@@ -62,18 +62,16 @@ const getOrders = async () => {
 };
 
 
-
-
 // Lấy chi tiết sản phẩm cho mỗi đơn hàng
 const getOrderProducts = async () => {
   try {
     const promises = orders.value.map((order) =>
-      api.get(`order_detail/${order.id}`)
+        api.get(`order_detail/${order.id}`)
     );
     const responses = await Promise.all(promises);
 
     productImages.value = responses.flatMap((response) =>
-      response.data.map((detail) => detail.productThumbnail)
+        response.data.map((detail) => detail.productThumbnail)
     );
   } catch (error) {
     console.error("Error fetching order products:", error);
@@ -113,8 +111,8 @@ const viewInvoice = async (orderId) => {
     }));
 
     const subtotal = detailsData.reduce(
-      (sum, item) => sum + item.price * item.quantity,
-      0
+        (sum, item) => sum + item.price * item.quantity,
+        0
     );
     const shippingFee = orderData.shipPrice || 0;
     const discount = orderData.disCountValue || 0;
@@ -125,11 +123,11 @@ const viewInvoice = async (orderId) => {
       createdAt: order.invoiceCreatedAt, // Sử dụng thời gian lưu trữ từ danh sách orders
       customerName: orderData.customerName || invoiceResponse.data.customerName,
       customerEmail:
-        invoiceResponse.data.customerEmail || orderData.customerEmail,
+          invoiceResponse.data.customerEmail || orderData.customerEmail,
       customerPhone:
-        orderData.customerPhone || invoiceResponse.data.customerPhone,
+          orderData.customerPhone || invoiceResponse.data.customerPhone,
       shippingAddress:
-        orderData.shippingAddress || invoiceResponse.data.shippingAddress,
+          orderData.shippingAddress || invoiceResponse.data.shippingAddress,
       sellerName: invoiceResponse.data.sellerName,
       details: invoiceDetails.value,
       subtotal,
@@ -157,24 +155,24 @@ const sendInvoiceEmail = async (orderId) => {
       return;
     }
 
-    const { default: html2pdf } = await import("html2pdf.js");
+    const {default: html2pdf} = await import("html2pdf.js");
     const pdfBlob = await html2pdf()
-      .from(element)
-      .set({
-        margin: 1,
-        filename: `invoice_${orderId}.pdf`,
-        image: { type: "jpeg", quality: 0.98 },
-        html2canvas: { scale: 2 },
-        jsPDF: { unit: "cm", format: "a4" },
-      })
-      .outputPdf("blob");
+        .from(element)
+        .set({
+          margin: 1,
+          filename: `invoice_${orderId}.pdf`,
+          image: {type: "jpeg", quality: 0.98},
+          html2canvas: {scale: 2},
+          jsPDF: {unit: "cm", format: "a4"},
+        })
+        .outputPdf("blob");
 
     const formData = new FormData();
     formData.append("file", pdfBlob, `invoice_${orderId}.pdf`);
     formData.append("orderId", orderId);
 
     const response = await api.post("order/sendInvoice", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
+      headers: {"Content-Type": "multipart/form-data"},
     });
 
     alert(response.data || "Hóa đơn đã được gửi qua email thành công.");
@@ -187,13 +185,13 @@ const sendInvoiceEmail = async (orderId) => {
 // Xuất hóa đơn dưới dạng PDF
 const exportPDF = async () => {
   const element = document.getElementById("printable-invoice");
-  const { default: html2pdf } = await import("html2pdf.js");
+  const {default: html2pdf} = await import("html2pdf.js");
   const options = {
     margin: 1,
     filename: `invoice_${selectedInvoice.value.id}.pdf`,
-    image: { type: "jpeg", quality: 0.98 },
-    html2canvas: { scale: 2 },
-    jsPDF: { unit: "cm", format: "a4", orientation: "portrait" },
+    image: {type: "jpeg", quality: 0.98},
+    html2canvas: {scale: 2},
+    jsPDF: {unit: "cm", format: "a4", orientation: "portrait"},
   };
   html2pdf().set(options).from(element).save();
 };
@@ -220,17 +218,14 @@ onMounted(getOrders);
         <Column field="id" header="Mã Đơn Hàng"></Column>
         <Column field="customerName" header="Khách Hàng"></Column>
         <Column
-          field="paymentMethodName"
-          header="Phương Thức Thanh Toán"
+            field="paymentMethodName"
+            header="Phương Thức Thanh Toán"
         ></Column>
         <Column header="Tổng Tiền">
           <template #body="slotProps">
             {{
               formatCurrency(
-                calculateFinalTotal(
-                  slotProps.data.total,
-                  slotProps.data.disCountValue
-                )
+                  slotProps.data.total
               )
             }}
           </template>
@@ -238,8 +233,8 @@ onMounted(getOrders);
         <Column field="status" header="Trạng Thái">
           <template #body="slotProps">
             <Tag
-              :value="getOrderStatusName(slotProps.data.status)"
-              :severity="getOrderStatusSeverity(slotProps.data.status)"
+                :value="getOrderStatusName(slotProps.data.status)"
+                :severity="getOrderStatusSeverity(slotProps.data.status)"
             />
           </template>
         </Column>
@@ -256,13 +251,13 @@ onMounted(getOrders);
         <Column header="Thao Tác">
           <template #body="slotProps">
             <Button
-              @click="viewOrderDetail(slotProps.data.id)"
-              icon="pi pi-eye"
-              rounded
-              outlined
+                @click="viewOrderDetail(slotProps.data.id)"
+                icon="pi pi-eye"
+                rounded
+                outlined
             />
             <Button
-              v-if="
+                v-if="
                 (slotProps.data.paymentMethodName === 'Thanh toán qua VNPay' &&
                   ['Đang Giao', 'Hoàn Thành'].includes(
                     getOrderStatusName(slotProps.data.status)
@@ -271,12 +266,12 @@ onMounted(getOrders);
                   'Thanh toán khi nhận hàng' &&
                   getOrderStatusName(slotProps.data.status) === 'Hoàn Thành')
               "
-              @click="() => {
+                @click="() => {
     viewInvoice(slotProps.data.id);
   }"
-              icon="pi pi-file-pdf"
-              label="Xem hóa đơn"
-              class="ml-2"
+                icon="pi pi-file-pdf"
+                label="Xem hóa đơn"
+                class="ml-2"
             />
           </template>
         </Column>
@@ -285,29 +280,29 @@ onMounted(getOrders);
 
     <!-- Giao diện bổ sung: Hóa đơn -->
     <div
-      v-if="showInvoice"
-      class="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50"
+        v-if="showInvoice"
+        class="fixed inset-0 bg-gray-800 bg-opacity-50 flex justify-center items-center z-50"
     >
       <div class="bg-white p-6 rounded-md shadow-md w-3/4">
         <div class="flex justify-end mb-4">
           <!-- Nút Quay lại -->
           <button
-            @click="backToOrders"
-            class="bg-gray-500 text-white px-4 py-2 rounded mr-2"
+              @click="backToOrders"
+              class="bg-gray-500 text-white px-4 py-2 rounded mr-2"
           >
             Quay lại
           </button>
           <!-- Nút Xuất PDF -->
           <button
-            @click="exportPDF"
-            class="bg-blue-500 text-white px-4 py-2 rounded mr-2"
+              @click="exportPDF"
+              class="bg-blue-500 text-white px-4 py-2 rounded mr-2"
           >
             Xuất PDF
           </button>
           <!-- Nút Gửi Email -->
           <button
-            @click="sendInvoiceEmail(selectedInvoice.id)"
-            class="bg-green-500 text-white px-4 py-2 rounded"
+              @click="sendInvoiceEmail(selectedInvoice.id)"
+              class="bg-green-500 text-white px-4 py-2 rounded"
           >
             Gửi Email
           </button>
@@ -342,7 +337,7 @@ onMounted(getOrders);
               {{ selectedInvoice?.customerName }}
             </p>
             <p>
-              <strong>Địa chỉ:</strong> {{ selectedInvoice?.shippingAddress  }}
+              <strong>Địa chỉ:</strong> {{ selectedInvoice?.shippingAddress }}
             </p>
             <p><strong>Số điện thoại:</strong> {{ selectedInvoice?.customerPhone }}</p>
             <p><strong>Email:</strong> {{ selectedInvoice?.customerEmail }}</p>
@@ -351,33 +346,33 @@ onMounted(getOrders);
           <!-- Table -->
           <table class="w-full mt-4 border-collapse border border-gray-300">
             <thead>
-              <tr>
-                <th class="border px-2 py-1">STT</th>
-                <th class="border px-2 py-1">Tên hàng hóa</th>
-                <th class="border px-2 py-1">Số lượng</th>
-                <th class="border px-2 py-1">Đơn giá</th>
-                <th class="border px-2 py-1">Thành tiền</th>
-              </tr>
+            <tr>
+              <th class="border px-2 py-1">STT</th>
+              <th class="border px-2 py-1">Tên hàng hóa</th>
+              <th class="border px-2 py-1">Số lượng</th>
+              <th class="border px-2 py-1">Đơn giá</th>
+              <th class="border px-2 py-1">Thành tiền</th>
+            </tr>
             </thead>
             <tbody>
-              <tr v-for="(item, index) in invoiceDetails" :key="index">
-                <td class="border px-2 py-1">{{ index + 1 }}</td>
-                <td class="border px-2 py-1">{{ item.productName }}</td>
-                <td class="border px-2 py-1">{{ item.quantity }}</td>
-                <td class="border px-2 py-1">
-                  {{ formatCurrency(item.unitPrice) }}
-                </td>
-                <td class="border px-2 py-1">
-                  {{ formatCurrency(item.totalPrice) }}
-                </td>
-              </tr>
+            <tr v-for="(item, index) in invoiceDetails" :key="index">
+              <td class="border px-2 py-1">{{ index + 1 }}</td>
+              <td class="border px-2 py-1">{{ item.productName }}</td>
+              <td class="border px-2 py-1">{{ item.quantity }}</td>
+              <td class="border px-2 py-1">
+                {{ formatCurrency(item.unitPrice) }}
+              </td>
+              <td class="border px-2 py-1">
+                {{ formatCurrency(item.totalPrice) }}
+              </td>
+            </tr>
             </tbody>
           </table>
 
           <!-- Footer -->
           <div class="mt-4 text-right">
             <p>
-              <strong>Phí vận chuyển:</strong> {{ formatCurrency(selectedInvoice.shippingFee || 0)  }}
+              <strong>Phí vận chuyển:</strong> {{ formatCurrency(selectedInvoice.shippingFee || 0) }}
             </p>
             <p><strong>Tổng cộng:</strong> {{ formatCurrency(selectedInvoice.total || 0) }}</p>
           </div>

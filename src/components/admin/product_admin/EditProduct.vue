@@ -12,13 +12,13 @@ const toast = useToast();
 const categories = ref([]);
 const formData = ref(null);
 const activeIndex = ref(0);
-const imageUrls = ref([]);
 const colors = ref([]);
 const newColor = ref("");
 const sizes = ref("");
 const newSize = ref("");
 const attributes = ref([]);
 const newAttribute = ref({ name: "", value: "" });
+const images = ref([]);
 defineProps({
   id: {
     type: String,
@@ -32,6 +32,31 @@ const items = ref([
   { label: "Thuộc Tính" },
 ]);
 
+const handleFileChange = async (event) => {
+  const selectedFiles = event.target.files;
+  for (const file of selectedFiles) {
+    const imageUrl = URL.createObjectURL(file);
+    images.value.push({
+      file,
+      itemImageSrc: imageUrl,
+      thumbnailImageSrc: imageUrl,
+      alt: 'Hình Ảnh Sản Phẩm',
+      title: 'Hình Ảnh Sản Phẩm'
+    });
+  }
+};
+
+const selectedThumbnail = ref(null);
+
+const handleThumbnailChange = (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    selectedThumbnail.value = file;
+    if (!formData.value) formData.value = {};
+    formData.value.thumbnailPreview = URL.createObjectURL(file);
+  }
+};
+
 const loadProduct = async () => {
   if (route.params.id) {
     try {
@@ -42,22 +67,8 @@ const loadProduct = async () => {
         productId: response.data.productId,
         inventoryQuantity: response.data.inventoryQuantity,
         description: response.data.description,
-        status: response.data.status,
       };
-      switch (formData.value.status) {
-        case "Còn hàng":
-          formData.value.status = 1;
-          break;
-        case "Hết hàng":
-          formData.value.status = 0;
-          break;
-        case "Comingsoon":
-          formData.value.status = 4;
-          break;
-        default:
-          formData.value.status = 1;
-      }
-      imageUrls.value = JSON.parse(response.data.images);
+      images.value = JSON.parse(response.data.images);
       colors.value = JSON.parse(response.data.colors);
       sizes.value = JSON.parse(response.data.sizes);
       const attributesObj = JSON.parse(response.data.attributes);
@@ -119,54 +130,58 @@ const removeAttribute = (index) => {
   attributes.value.splice(index, 1);
 };
 
-const onUpload = async (event) => {
-  const formData = new FormData();
-  formData.append("image", event.files[0]);
-  try {
-    const res = await api.post("upload", formData);
-    imageUrls.value.push(res.data);
-  } catch (error) {
-    showError(toast, "Lỗi khi tải ảnh lên");
-  }
-};
-
 const removeImage = (index) => {
-  imageUrls.value.splice(index, 1);
+  images.value.splice(index, 1);
 };
 
 const updateProduct = async () => {
   try {
+    let thumbnailUrl = formData.value.thumbnail;
+    if (selectedThumbnail.value) {
+      const thumbnailFormData = new FormData();
+      thumbnailFormData.append("image", selectedThumbnail.value);
+      const thumbnailResponse = await api.post("upload", thumbnailFormData);
+      thumbnailUrl = thumbnailResponse.data;
+    }
+
+    const updatedImages = await Promise.all(
+        images.value.map(async (image, index) => {
+          if (image.file) {
+            const formData = new FormData();
+            formData.append("image", image.file);
+            const res = await api.post("upload", formData);
+            return res.data;
+          } else if (image.itemImageSrc) {
+            return image.itemImageSrc;
+          } else {
+            return image;
+          }
+        })
+    );
+
     const attributesObj = attributes.value.reduce((acc, curr) => {
       acc[curr.name] = curr.value;
       return acc;
     }, {});
 
-    let statusValue;
-    switch (formData.value.status) {
-      case "Còn hàng":
-        statusValue = 1;
-        break;
-      case "Hết hàng":
-        statusValue = 0;
-        break;
-      case "Comingsoon":
-        statusValue = 4;
-        break;
-      default:
-        statusValue = 1;
-    }
-
     const payload = {
-      ...formData.value,
       category: { id: formData.value.category },
-      colors: JSON.stringify(colors.value),
-      sizes: JSON.stringify(sizes.value),
-      attributes: JSON.stringify(attributesObj),
-      images: JSON.stringify(imageUrls.value),
-      status: statusValue,
-      productId: formData.value.productId,
-      inventoryQuantity: formData.value.inventoryQuantity,
+      name: formData.value.name,
+      thumbnail: thumbnailUrl,
+      brand: formData.value.brand,
+      origin: formData.value.origin,
+      unit: formData.value.unit,
+      serial: formData.value.serial,
+      warranty: formData.value.warranty,
+      buyPrice: formData.value.buyPrice,
+      sellPrice: formData.value.sellPrice,
+      tax: formData.value.tax,
       description: formData.value.description,
+      inventoryQuantity: formData.value.inventoryQuantity,
+      color: { colorJson: JSON.stringify(colors.value) },
+      image: { imageJson: JSON.stringify(updatedImages) },
+      attribute: { attributeJson: JSON.stringify(attributesObj) },
+      size: { sizeJson: JSON.stringify(sizes.value) },
     };
 
     await api.put(`product/${formData.value.id}`, payload);
@@ -290,18 +305,6 @@ onMounted(async () => {
         <!-- Step 2: Detailed Information -->
         <div v-show="activeIndex === 1">
           <div class="grid grid-cols-2 gap-6">
-            <div class="space-y-2">
-              <label for="unit" class="block text-gray-700 font-medium">
-                Đơn Vị
-              </label>
-              <input
-                id="unit"
-                v-model="formData.unit"
-                type="text"
-                required
-                class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
 
             <div class="space-y-2">
               <label for="serial" class="block text-gray-700 font-medium">
@@ -311,6 +314,34 @@ onMounted(async () => {
                 id="serial"
                 v-model="formData.serial"
                 type="text"
+                class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            <div class="space-y-2">
+              <label for="thumbnail" class="block text-gray-700 font-medium">
+                Thumbnail
+              </label>
+              <div class="flex items-center space-x-4">
+                <input
+                    id="thumbnail"
+                    type="file"
+                    @change="handleThumbnailChange"
+                    accept="image/*"
+                    class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <label for="unit" class="block text-gray-700 font-medium">
+                Đơn Vị
+              </label>
+              <input
+                id="unit"
+                v-model="formData.unit"
+                type="text"
+                required
                 class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
             </div>
@@ -334,12 +365,13 @@ onMounted(async () => {
               </label>
               <div class="relative">
                 <input
-                  id="buyPrice"
-                  v-model="formData.buyPrice"
-                  type="number"
-                  required
-                  min="0"
-                  class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    id="buyPrice"
+                    v-model="formData.buyPrice"
+                    type="number"
+                    step="0.01"
+                    required
+                    min="0"
+                    class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
                 <span class="absolute right-3 top-2 text-gray-500">đ</span>
               </div>
@@ -351,12 +383,13 @@ onMounted(async () => {
               </label>
               <div class="relative">
                 <input
-                  id="sellPrice"
-                  v-model="formData.sellPrice"
-                  type="number"
-                  required
-                  min="0"
-                  class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    id="sellPrice"
+                    v-model="formData.sellPrice"
+                    type="number"
+                    step="0.01"
+                    required
+                    min="0"
+                    class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
                 <span class="absolute right-3 top-2 text-gray-500">đ</span>
               </div>
@@ -364,7 +397,7 @@ onMounted(async () => {
 
             <div class="space-y-2">
               <label for="inventoryQuantity" class="block text-gray-700 font-medium">
-                Số Lượng Tồn Kho
+                Số Lượng
               </label>
               <input
                   id="inventoryQuantity"
@@ -374,20 +407,6 @@ onMounted(async () => {
                   required
                   class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
-            </div>
-
-            <div class="space-y-2">
-              <label class="text-gray-600 font-medium" for="status">Trạng Thái</label>
-              <select id="status"
-                      name="status"
-                      v-model="formData.status"
-                      class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent transition"
-                      required aria-label="Product Status">
-                <option value="" disabled>Chọn Trạng Thái</option>
-                <option :value="1">Hoạt động</option>
-                <option :value="0">Ngừng hoạt động</option>
-                <option :value="4">Sắp ra mắt</option>
-              </select>
             </div>
 
             <div class="space-y-2">
@@ -433,7 +452,7 @@ onMounted(async () => {
                   type="file"
                   accept="image/*"
                   multiple
-                  @change="onUpload"
+                  @change="handleFileChange"
                   class="hidden"
                   id="image-upload"
                 />
@@ -446,12 +465,12 @@ onMounted(async () => {
               </div>
               <div class="flex flex-wrap gap-4 mt-4">
                 <div
-                  v-for="(url, index) in imageUrls"
+                  v-for="(image, index) in images"
                   :key="index"
                   class="relative"
                 >
                   <img
-                    :src="getImageUrl(url)"
+                      :src="image.itemImageSrc || getImageUrl(image)"
                     class="w-40 h-40 object-cover rounded-lg"
                     alt="Product image"
                   />

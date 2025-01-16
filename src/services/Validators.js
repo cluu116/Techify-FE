@@ -56,3 +56,28 @@ export const validatePhoneNumber = (phoneNumber) => {
     }
     return "";
 };
+
+export const validateAddress = (province, district, ward, specificAddress, phoneNumber) => {
+    if (!province) {
+        return "Vui lòng chọn Tỉnh/Thành phố";
+    }
+    if (!district) {
+        return "Vui lòng chọn Quận/Huyện";
+    }
+    if (!ward) {
+        return "Vui lòng chọn Phường/Xã";
+    }
+    if (!specificAddress || specificAddress.trim() === '') {
+        return "Vui lòng nhập địa chỉ giao hàng cụ thể";
+    }
+    if (specificAddress.length > 255) {
+        return "Địa chỉ không được vượt quá 255 ký tự";
+    }
+
+    const phoneError = validatePhoneNumber(phoneNumber);
+    if (phoneError) {
+        return phoneError;
+    }
+
+    return "";
+};

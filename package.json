@@ -11,21 +11,14 @@
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
     "@primevue/themes": "^4.2.1",
-<<<<<<< HEAD
+    "animate.css": "^4.1.1",
     "aos": "^2.3.4",
     "axios": "^1.7.7",
     "chart.js": "^4.4.7",
     "emailjs-com": "^3.2.0",
     "html2pdf.js": "^0.10.2",
     "jspdf": "^2.5.2",
-=======
-    "animate.css": "^4.1.1",
-    "aos": "^2.3.4",
-    "axios": "^1.7.7",
-    "chart.js": "^4.4.7",
-    "html2pdf.js": "^0.10.2",
     "lodash": "^4.17.21",
->>>>>>> 8930b52631494172189a6340faf04fda9ae792d2
     "pinia": "^2.3.0",
     "primeicons": "^7.0.0",
     "primevue": "^4.2.1",

@@ -196,7 +196,7 @@ const goToHomePage = () => {
 
 const viewOrderDetails = () => {
   if (paymentResult.value && paymentResult.value.orderId) {
-    router.push({name: 'OrderDetail', params: {id: paymentResult.value.orderId}});
+    router.push({ name: 'Đơn mua' });
   } else {
     toast.add({
       severity: 'error',
