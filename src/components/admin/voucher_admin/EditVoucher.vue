@@ -117,7 +117,9 @@ const updateVoucher = async () => {
     const response = await api.put(`voucher/${voucher.value.id}`, formattedVoucher);
     if (response.status === 200) {
       showSuccess(toast, "Cập nhật phiếu giảm giá thành công");
-      await router.push("/admin/voucher");
+      setTimeout(async () => {
+        await router.push("/admin/voucher");
+      }, 1500);
     }
   } catch (error) {
     showError(toast, "Cập nhật phiếu giảm giá thất bại: " + (error.response?.data?.message || error.message));

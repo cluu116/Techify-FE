@@ -21,14 +21,15 @@
     </div>
 
     <!-- Navigation section -->
-    <nav class="flex-grow overflow-y-auto">
+    <nav class="flex-grow overflow-y-auto custom-scrollbar">
       <ul class="px-4 py-2 space-y-1">
         <li v-for="(item, index) in menuItems" :key="index" class="menu-item">
           <template v-if="item.submenu">
             <a @click="toggleSubmenu(item.key)" class="menu-link" :class="{ 'active': openSubmenus[item.key] }">
               <i :class="item.icon"></i>
               <span>{{ item.label }}</span>
-              <i class="pi pi-chevron-down ml-auto transition-transform" :class="{ 'rotate-180': openSubmenus[item.key] }"></i>
+              <i class="pi pi-chevron-down ml-auto transition-transform"
+                 :class="{ 'rotate-180': openSubmenus[item.key] }"></i>
             </a>
             <transition name="submenu">
               <ul v-show="openSubmenus[item.key]" class="submenu">
@@ -52,43 +53,45 @@
     <!-- User section -->
     <div class="border-t border-gray-200 p-4">
       <div class="flex items-center space-x-3 mb-4">
-        <img :src="user ? user.avatar : '/assets/images/user-avatar.png'" alt="User Avatar" class="w-10 h-10 rounded-full object-cover">
+        <img :src="user ? user.avatar : '/assets/images/user-avatar.png'" alt="User Avatar"
+             class="w-10 h-10 rounded-full object-cover">
         <span class="font-medium text-gray-800">{{ user ? user.fullName : "Đăng Nhập" }}</span>
       </div>
       <div class="flex space-x-2">
         <Button label="Tài Khoản" icon="pi pi-user" class="p-button-outlined p-button-sm flex-1" to="/"></Button>
-        <Button label="Đăng Xuất" icon="pi pi-sign-out" class="p-button-danger p-button-text p-button-sm flex-1" @click="logout"></Button>
+        <Button label="Đăng Xuất" icon="pi pi-sign-out" class="p-button-danger p-button-text p-button-sm flex-1"
+                @click="logout"></Button>
       </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { RouterLink } from "vue-router";
-import { authService } from "@/services/AuthService.js";
-import { onMounted, ref } from "vue";
+import {RouterLink} from "vue-router";
+import {authService} from "@/services/AuthService.js";
+import {computed, onMounted, ref} from "vue";
 import router from "@/router/router.js";
 
 const user = ref(null);
 const openSubmenus = ref({});
 
-const menuItems = [
-  {
-    key: 'stats',
-    label: 'Thống Kê',
-    icon: 'pi pi-chart-line',
-    submenu: [
-      { label: 'Doanh Thu', icon: 'pi pi-chart-bar', to: '/admin/stats/revenue' },
-      { label: 'Đơn Hàng', icon: 'pi pi-shopping-cart', to: '/admin/stats/orders' }
-    ]
-  },
-  { label: 'Trang Chủ', icon: 'pi pi-home', to: '/admin/home' },
+const isAdmin = computed(() => authService.role === 'ADMIN');
+const menuItems = computed(() => [
+  // Các mục menu chỉ dành cho admin
+  ...(isAdmin.value ? [
+    { label: 'Trang Chủ', icon: 'pi pi-home', to: '/admin/home' },
+    { label: 'Quản Lý Nhân Viên', icon: 'pi pi-users', to: '/admin/users' },
+    { label: 'Quản Lý Phương Thức Thanh Toán', icon: 'pi pi-credit-card', to: '/admin/paymentMethod' }
+  ] : []),
+
+  // Các mục menu chung cho cả admin và nhân viên
   { label: 'Quản Lý Danh Mục', icon: 'pi pi-list', to: '/admin/category' },
   { label: 'Quản Lý Sản Phẩm', icon: 'pi pi-box', to: '/admin/product' },
   { label: 'Quản Lý Đơn Hàng', icon: 'pi pi-shopping-cart', to: '/admin/order' },
   { label: 'Quản Lý Phiếu Giảm Giá', icon: 'pi pi-ticket', to: '/admin/voucher' },
-  { label: 'Quản Lý Chương Trình Khuyến Mại', icon: 'pi pi-percentage', to: '/admin/promotions' }
-];
+  { label: 'Quản Lý Chương Trình Khuyến Mại', icon: 'pi pi-percentage', to: '/admin/promotions' },
+  { label: 'Quản Lý Đơn Vị Vận Chuyển', icon: 'pi pi-truck', to: '/admin/transportVendor' },
+]);
 
 const fetchUserData = async () => {
   if (authService.isAuthenticated) {
@@ -155,5 +158,19 @@ const toggleSubmenu = (key) => {
 .submenu-leave-to {
   opacity: 0;
   max-height: 0;
+}
+.custom-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
+}
+
+nav {
+  height: calc(100vh - 200px);
 }
 </style>

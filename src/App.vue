@@ -11,6 +11,7 @@ import {useRoute} from "vue-router";
 import {computed} from "vue";
 import { createPinia } from 'pinia'
 import ScrollToTop from "@/components/hero/ScrollToTop.vue";
+import FptAiChatBot from '@/components/chatbot/FptAiChatBot.vue'
 
 const route = useRoute();
 const isAdminPage = computed(() => route.path.includes("admin"));

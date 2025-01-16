@@ -251,6 +251,7 @@ import {getProvinces, getDistricts, getWards} from "vietnam-provinces";
 import api from "@/services/ApiService.js";
 import {useToast} from "primevue";
 import {showError, showSuccess} from "@/services/ToastService.js";
+import {validateFullName, validatePassword, validatePhoneNumber} from "@/services/Validators.js";
 
 export default {
   setup() {
@@ -266,7 +267,10 @@ export default {
     const showOldPassword = ref(false);
     const showNewPassword = ref(false);
     const showConfirmPassword = ref(false);
-
+    const fullNameError = ref("");
+    const phoneError = ref("");
+    const passwordError = ref("");
+    const currentPasswordError = ref("");
 
     onMounted(async () => {
       try {
@@ -309,6 +313,12 @@ export default {
     };
 
     const updateAddress = async () => {
+      phoneError.value = validatePhoneNumber(userInfo.value.phone);
+      if (phoneError.value) {
+        showError(toast, phoneError.value);
+        return;
+      }
+
       try {
         const customerId = authService.id;
         const updateDTO = {
@@ -349,6 +359,12 @@ export default {
 
 
     const updateProfile = async () => {
+      fullNameError.value = validateFullName(userInfo.value.fullName);
+      if (fullNameError.value) {
+        showError(toast, fullNameError.value);
+        return;
+      }
+
       try {
         const customerId = authService.id;
         const updateDTO = {
@@ -386,19 +402,37 @@ export default {
     const handleAvatarUpload = async (event) => {
       const file = event.target.files[0];
       if (file) {
+        if (file.size > 1 * 1024 * 1024) {
+          showError(toast, "Kích thước file quá lớn. Vui lòng chọn file nhỏ hơn 1MB.");
+          return;
+        }
+
         try {
           const formData = new FormData();
-          formData.append('avatar', file);
+          formData.append('image', file);
 
-          const response = await api.post('/users/upload-avatar', formData, {
+          const uploadResponse = await api.post('/upload', formData, {
             headers: {
               'Content-Type': 'multipart/form-data'
             }
           });
 
-          if (response.status === 200) {
-            userInfo.value.avatar = response.data.avatarUrl;
-            showSuccess(toast, "Ảnh đại diện đã được cập nhật thành công");
+          if (uploadResponse.status === 200) {
+            const newAvatarUrl = uploadResponse.data.url;
+
+            const updateResponse = await api.put('/auth/update-Image', {
+              avatar: newAvatarUrl
+            });
+
+            if (updateResponse.status === 200) {
+              userInfo.value.avatar = newAvatarUrl;
+              authService.avatar = newAvatarUrl;
+              showSuccess(toast, "Ảnh đại diện đã được cập nhật thành công");
+            } else {
+              throw new Error("Không thể cập nhật ảnh đại diện");
+            }
+          } else {
+            throw new Error("Tải lên ảnh không thành công");
           }
         } catch (error) {
           console.error("Error uploading avatar:", error);
@@ -430,6 +464,16 @@ export default {
     };
 
     const changePassword = async () => {
+      currentPasswordError.value = validatePassword(passwordFields.value[0].value);
+      passwordError.value = validatePassword(passwordFields.value[1].value);
+      if (currentPasswordError.value) {
+        showError(toast, currentPasswordError.value);
+        return;
+      }
+      if (passwordError.value) {
+        showError(toast, passwordError.value);
+        return;
+      }
       if (passwordFields.value[1].value !== passwordFields.value[2].value) {
         showError(toast, "Mật khẩu mới và xác nhận mật khẩu không khớp");
         return;

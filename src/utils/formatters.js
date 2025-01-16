@@ -23,9 +23,9 @@ export const getOrderStatusName = (status) => {
   if (status === 0) return "Chờ Thanh Toán";
   if (status === 1) return "Chờ xác Nhận";
   if (status === 2) return "Đang Giao";
-  if (status === 3) return "Hoàn Thành";
+  if (status === 3) return "Đợi người dùng xác nhận";
   if (status === 4) return "Đã Hủy";
-  if (status === 5) return "Trả Hàng";
+  if (status === 5) return "Hoàn Thành";
   return "N/A";
 };
 
@@ -33,13 +33,16 @@ export const getOrderStatusSeverity = (status) => {
   if (status === 0) return "warning";
   if (status === 1) return "info";
   if (status === 2) return "primary";
-  if (status === 3) return "success";
+  if (status === 3) return "help";
   if (status === 4) return "danger";
-  if (status === 5) return "secondary";
+  if (status === 5) return "success";
   return "secondary";
 };
+export const calculateFinalTotal = (orderDetails) => {
+  if (!orderDetails || !orderDetails.length) return 0;
 
-export const calculateFinalTotal = (total, discount) => {
-  if (!total) return 0;
-  return total - (discount || 0);
+  return orderDetails
+    .map((detail) => detail.total || 0) // Giả định rằng mỗi detail có trường `total`
+    .reduce((sum, total) => sum + total, 0);
 };
+

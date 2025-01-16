@@ -1,9 +1,9 @@
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { useToast } from 'primevue/usetoast';
+import {ref, onMounted} from 'vue';
+import {useRoute, useRouter} from 'vue-router';
+import {useToast} from 'primevue/usetoast';
 import api from "@/services/ApiService.js";
-import { clearCart } from "@/services/CartService.js";
+import {clearCart} from "@/services/CartService.js";
 import Button from 'primevue/button';
 import emailjs from "@emailjs/browser";
 import {authService} from "@/services/AuthService.js";
@@ -36,33 +36,78 @@ const sendEmail = async () => {
     try {
       const userInfo = await authService.getUserInfo();
       emailjs.send(
-      "service_yewje0g",
-      "template_r1hlp8m",
-      {
-        to_name: userInfo.fullName,
-        to_email: userInfo.email,
-      },
-      "f5X5p1n6nWpbqLaob"
-    )
-    .then(
-      () => {
-        console.log("SUCCESS!");
-      },
-      (error) => {
-        toast.add({
-          severity: "error",
-          summary: "Lỗi",
-          detail: "Đã có lỗi xảy ra, gửi email thất bại.",
-          life: 3000,
-        });
-      }
-    );
+          "service_yewje0g",
+          "template_r1hlp8m",
+          {
+            to_name: userInfo.fullName,
+            to_email: userInfo.email,
+          },
+          "f5X5p1n6nWpbqLaob"
+      )
+          .then(
+              () => {
+                console.log("SUCCESS!");
+              },
+              (error) => {
+                toast.add({
+                  severity: "error",
+                  summary: "Lỗi",
+                  detail: "Đã có lỗi xảy ra, gửi email thất bại.",
+                  life: 3000,
+                });
+              }
+          );
     } catch (e) {
       console.error('Error fetching user data:', e);
     }
   }
 };
+const updateVoucherQuantity = async (orderId) => {
+  try {
+    const orderResponse = await api.get(`order/${orderId}`);
+    const order = orderResponse.data;
 
+    if (order.voucherId) {
+      const voucherResponse = await api.get(`voucher/${order.voucherId}`);
+      const voucher = voucherResponse.data;
+
+      if (voucher.usageLimit > 0) {
+        const newQuantity = voucher.usageLimit - 1;
+        // Sử dụng PATCH request với endpoint mới
+        await api.patch(`voucher/${order.voucherId}/quantity?quantity=${newQuantity}`);
+        console.log('Đã cập nhật số lượng voucher');
+      }
+    }
+  } catch (error) {
+    console.error('Lỗi khi cập nhật số lượng voucher:', error);
+    throw error;
+  }
+};
+const updateProductQuantities = async (orderId) => {
+  try {
+    const response = await api.get(`order_detail/${orderId}`);
+    const orderItems = response.data;
+
+    for (const item of orderItems) {
+      const productResponse = await api.get(`product/${item.productId}`);
+      const currentAvailableQuantity = productResponse.data.availableQuantity;
+
+      const newQuantity = currentAvailableQuantity - item.quantity;
+
+      // Cập nhật số lượng mới
+      await api.put(`product/AvailableQuantity/${item.productId}`, null, {
+        params: {
+          quantity: newQuantity
+        }
+      });
+    }
+
+    console.log('Đã cập nhật số lượng sản phẩm trong kho');
+  } catch (error) {
+    console.error('Lỗi khi cập nhật số lượng sản phẩm:', error);
+    throw error;
+  }
+};
 onMounted(async () => {
   const resultParam = route.query.result;
   const storedOrderId = sessionStorage.getItem('currentOrderId');
@@ -76,6 +121,19 @@ onMounted(async () => {
         if (storedOrderId) {
           const updated = await updateOrderStatus(storedOrderId, 1);
           if (updated) {
+            try {
+              await updateVoucherQuantity(storedOrderId);
+              await updateProductQuantities(storedOrderId);
+              console.log('Số lượng voucher và sản phẩm đã được cập nhật');
+            } catch (error) {
+              toast.add({
+                severity: 'warning',
+                summary: 'Cảnh báo',
+                detail: 'Đơn hàng đã được xác nhận nhưng có lỗi khi cập nhật số lượng voucher hoặc sản phẩm',
+                life: 5000,
+              });
+            }
+
             toast.add({
               severity: 'success',
               summary: 'Thành công',
@@ -85,7 +143,6 @@ onMounted(async () => {
             await sendEmail();
           }
         } else {
-          console.error('No stored orderId found');
           toast.add({
             severity: 'warning',
             summary: 'Cảnh báo',
@@ -105,7 +162,6 @@ onMounted(async () => {
             });
           }
         } else {
-          console.error('No stored orderId found for failed payment');
           toast.add({
             severity: 'error',
             summary: 'Thất bại',
@@ -115,7 +171,6 @@ onMounted(async () => {
         }
       }
     } catch (error) {
-      console.error('Error processing payment result:', error);
       toast.add({
         severity: 'error',
         summary: 'Lỗi',
@@ -124,7 +179,6 @@ onMounted(async () => {
       });
     }
   } else {
-    console.log('No payment result found in route query.');
     toast.add({
       severity: 'info',
       summary: 'Thông tin',
@@ -142,7 +196,7 @@ const goToHomePage = () => {
 
 const viewOrderDetails = () => {
   if (paymentResult.value && paymentResult.value.orderId) {
-    router.push({ name: 'OrderDetail', params: { id: paymentResult.value.orderId } });
+    router.push({name: 'OrderDetail', params: {id: paymentResult.value.orderId}});
   } else {
     toast.add({
       severity: 'error',
@@ -155,6 +209,7 @@ const viewOrderDetails = () => {
 </script>
 
 <template>
+  <toast/>
   <div class="payment-result-container">
     <div class="result-content">
       <div v-if="isLoading" class="loading-spinner">
@@ -185,8 +240,9 @@ const viewOrderDetails = () => {
           <p>Không có thông tin thanh toán</p>
         </div>
         <div class="action-buttons">
-          <Button label="Xem Chi Tiết Đơn Hàng" icon="pi pi-file" class="p-button-outlined" @click="viewOrderDetails" v-if="paymentResult && paymentResult.success" />
-          <Button label="Quay Về Trang Chủ" icon="pi pi-home" @click="goToHomePage" />
+          <Button label="Xem Chi Tiết Đơn Hàng" icon="pi pi-file" class="p-button-outlined" @click="viewOrderDetails"
+                  v-if="paymentResult && paymentResult.success"/>
+          <Button label="Quay Về Trang Chủ" icon="pi pi-home" @click="goToHomePage"/>
         </div>
       </div>
     </div>

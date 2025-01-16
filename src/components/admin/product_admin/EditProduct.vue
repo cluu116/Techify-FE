@@ -1,9 +1,10 @@
 <script setup>
-import { ref, onMounted } from "vue";
+import {ref, onMounted} from "vue";
 import { useToast } from "primevue/usetoast";
 import { useRoute, useRouter } from "vue-router";
 import api from "@/services/ApiService.js";
 import { showError, showSuccess } from "@/services/ToastService.js";
+import getImageUrl from "@/utils/ImageUtils.js";
 
 const route = useRoute();
 const router = useRouter();
@@ -14,13 +15,20 @@ const activeIndex = ref(0);
 const imageUrls = ref([]);
 const colors = ref([]);
 const newColor = ref("");
+const sizes = ref("");
+const newSize = ref("");
 const attributes = ref([]);
 const newAttribute = ref({ name: "", value: "" });
-
+defineProps({
+  id: {
+    type: String,
+    required: true
+  }
+});
 const items = ref([
   { label: "Thông Tin Cơ Bản" },
   { label: "Thông Tin Chi Tiết" },
-  { label: "Hình Ảnh & Màu Sắc" },
+  { label: "Hình Ảnh & Màu Sắc & Kích Thước" },
   { label: "Thuộc Tính" },
 ]);
 
@@ -28,17 +36,40 @@ const loadProduct = async () => {
   if (route.params.id) {
     try {
       const response = await api.get(`product/${route.params.id}`);
-      formData.value = response.data;
+      formData.value = {
+        ...response.data,
+        category: response.data.category.id,
+        productId: response.data.productId,
+        inventoryQuantity: response.data.inventoryQuantity,
+        description: response.data.description,
+        status: response.data.status,
+      };
+      switch (formData.value.status) {
+        case "Còn hàng":
+          formData.value.status = 1;
+          break;
+        case "Hết hàng":
+          formData.value.status = 0;
+          break;
+        case "Comingsoon":
+          formData.value.status = 4;
+          break;
+        default:
+          formData.value.status = 1;
+      }
       imageUrls.value = JSON.parse(response.data.images);
       colors.value = JSON.parse(response.data.colors);
+      sizes.value = JSON.parse(response.data.sizes);
       const attributesObj = JSON.parse(response.data.attributes);
       attributes.value = Object.entries(attributesObj).map(([name, value]) => ({
         name,
         value,
       }));
+      console.log("Loaded product category:", formData.value.category); // For debugging
+
     } catch (error) {
       showError(toast, "Lỗi khi tải thông tin sản phẩm");
-      router.push("/admin/product");
+      await router.push("/admin/product");
     }
   }
 };
@@ -47,6 +78,7 @@ const getCategories = async () => {
   try {
     const response = await api.get("category");
     categories.value = response.data;
+    console.log("Loaded categories:", categories.value); // For debugging
   } catch (error) {
     showError(toast, "Lỗi khi tải danh mục sản phẩm");
   }
@@ -63,6 +95,16 @@ const removeColor = (colorToRemove) => {
   colors.value = colors.value.filter((color) => color !== colorToRemove);
 };
 
+const addSize = () => {
+  if (newSize.value.trim() !== "") {
+    sizes.value.push(newSize.value);
+    newSize.value = "";
+  }
+};
+
+const removeSize = (sizeToRemove) => {
+  sizes.value = sizes.value.filter((size) => size!== sizeToRemove);
+};
 const addAttribute = () => {
   if (
     newAttribute.value.name.trim() !== "" &&
@@ -99,18 +141,48 @@ const updateProduct = async () => {
       return acc;
     }, {});
 
+    let statusValue;
+    switch (formData.value.status) {
+      case "Còn hàng":
+        statusValue = 1;
+        break;
+      case "Hết hàng":
+        statusValue = 0;
+        break;
+      case "Comingsoon":
+        statusValue = 4;
+        break;
+      default:
+        statusValue = 1;
+    }
+
     const payload = {
       ...formData.value,
+      category: { id: formData.value.category },
       colors: JSON.stringify(colors.value),
+      sizes: JSON.stringify(sizes.value),
       attributes: JSON.stringify(attributesObj),
       images: JSON.stringify(imageUrls.value),
+      status: statusValue,
+      productId: formData.value.productId,
+      inventoryQuantity: formData.value.inventoryQuantity,
+      description: formData.value.description,
     };
 
     await api.put(`product/${formData.value.id}`, payload);
     showSuccess(toast, "Cập nhật sản phẩm thành công");
     await router.push("/admin/product");
   } catch (error) {
-    showError(toast, "Cập nhật sản phẩm thất bại");
+    console.error("Error updating product:", error);
+    let errorMessage = "Cập nhật sản phẩm thất bại";
+    if (error.response) {
+      errorMessage += `: ${error.response.data.message || error.response.statusText}`;
+    } else if (error.request) {
+      errorMessage += ": Không nhận được phản hồi từ server";
+    } else {
+      errorMessage += `: ${error.message}`;
+    }
+    showError(toast, errorMessage);
   }
 };
 
@@ -120,6 +192,7 @@ onMounted(async () => {
 </script>
 
 <template>
+  <Toast/>
   <div class="card bg-white p-6 rounded-lg mb-4" v-if="formData">
     <!-- Steps indicator -->
     <div class="flex justify-between mb-8">
@@ -170,16 +243,16 @@ onMounted(async () => {
                 Danh Mục
               </label>
               <select
-                id="category"
-                v-model="formData.category"
-                required
-                class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  id="category"
+                  v-model="formData.category"
+                  required
+                  class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               >
                 <option value="" disabled>Chọn danh mục</option>
                 <option
-                  v-for="category in categories"
-                  :key="category.id"
-                  :value="category.id"
+                    v-for="category in categories"
+                    :key="category.id"
+                    :value="category.id"
                 >
                   {{ category.name }}
                 </option>
@@ -257,7 +330,7 @@ onMounted(async () => {
 
             <div class="space-y-2">
               <label for="buyPrice" class="block text-gray-700 font-medium">
-                Giá Nhập
+                Giá Mua
               </label>
               <div class="relative">
                 <input
@@ -287,6 +360,34 @@ onMounted(async () => {
                 />
                 <span class="absolute right-3 top-2 text-gray-500">đ</span>
               </div>
+            </div>
+
+            <div class="space-y-2">
+              <label for="inventoryQuantity" class="block text-gray-700 font-medium">
+                Số Lượng Tồn Kho
+              </label>
+              <input
+                  id="inventoryQuantity"
+                  v-model="formData.inventoryQuantity"
+                  type="number"
+                  min="0"
+                  required
+                  class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+
+            <div class="space-y-2">
+              <label class="text-gray-600 font-medium" for="status">Trạng Thái</label>
+              <select id="status"
+                      name="status"
+                      v-model="formData.status"
+                      class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent transition"
+                      required aria-label="Product Status">
+                <option value="" disabled>Chọn Trạng Thái</option>
+                <option :value="1">Hoạt động</option>
+                <option :value="0">Ngừng hoạt động</option>
+                <option :value="4">Sắp ra mắt</option>
+              </select>
             </div>
 
             <div class="space-y-2">
@@ -350,7 +451,7 @@ onMounted(async () => {
                   class="relative"
                 >
                   <img
-                    :src="url"
+                    :src="getImageUrl(url)"
                     class="w-40 h-40 object-cover rounded-lg"
                     alt="Product image"
                   />
@@ -404,6 +505,40 @@ onMounted(async () => {
                   <button
                     @click="removeColor(color)"
                     class="ml-2 text-gray-500 hover:text-gray-700"
+                  >
+                    ×
+                  </button>
+                </span>
+              </div>
+            </div>
+
+            <div class="space-y-2">
+              <label class="block text-gray-700 font-medium">Kích thước</label>
+              <div class="flex gap-2">
+                <input
+                    v-model="newSize"
+                    type="text"
+                    placeholder="Nhập kích thước"
+                    class="flex-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <button
+                    type="button"
+                    @click="addSize"
+                    class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600"
+                >
+                  Thêm
+                </button>
+              </div>
+              <div class="flex flex-wrap gap-2 mt-2">
+                <span
+                    v-for="size in sizes"
+                    :key="size"
+                    class="inline-flex items-center px-3 py-1 rounded-full text-sm bg-gray-100"
+                >
+                  {{ size }}
+                  <button
+                      @click="removeSize(size)"
+                      class="ml-2 text-gray-500 hover:text-gray-700"
                   >
                     ×
                   </button>

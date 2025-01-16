@@ -4,24 +4,51 @@ import api, {generateFormData, resetForm} from "@/services/ApiService.js";
 import {showError, showSuccess} from "@/services/ToastService.js";
 import {useToast} from "primevue";
 import {authService} from "@/services/AuthService.js";
+import {validateEmail, validateFullName, validatePassword} from "@/services/Validators.js";
 
 const toast = useToast();
 const formState = ref("login");
+const emailError = ref("");
+const passwordError = ref("");
+const fullNameError = ref("");
 
 const registerAccount = async () => {
   const formData = generateFormData("accountForm");
-  const res = await api.post("auth/register", formData);
-  if (res.status === 200) {
+  const email = formData.get("email");
+  const password = formData.get("passwordHash");
+  const fullName = formData.get("fullName");
+
+  emailError.value = validateEmail(email);
+  passwordError.value = validatePassword(password);
+  fullNameError.value = validateFullName(fullName);
+
+  if (emailError.value || passwordError.value || fullNameError.value) {
+    return;
+  }
+
+  try {
+    const res = await api.post("auth/register", formData);
     resetForm("accountForm");
     showSuccess(toast, "Đăng Ký Tài Khoản Thành Công");
-  } else {
-    showError(toast, "Đăng Ký Tài Khoản Thất Bại, Hãy Thử Lại");
+  } catch (error) {
+    showError(toast, error.response?.data || "Đăng Ký Tài Khoản Thất Bại, Hãy Thử Lại");
   }
 };
+
 const login = async () => {
   const formData = generateFormData("accountForm");
-  const res = await api.post("auth/login", formData);
-  if (res.status === 200) {
+  const email = formData.get("email");
+  const password = formData.get("passwordHash");
+
+  emailError.value = validateEmail(email);
+  passwordError.value = validatePassword(password);
+
+  if (emailError.value || passwordError.value) {
+    return;
+  }
+
+  try {
+    const res = await api.post("auth/login", formData);
     resetForm("accountForm");
     showSuccess(toast, "Đăng Nhập Thành Công");
     localStorage.setItem("token", res.data.token);
@@ -29,10 +56,18 @@ const login = async () => {
     setTimeout(() => {
       window.location.reload();
     }, 500);
-  } else {
-    showError(toast, "Đăng Nhập Thất Bại");
+  } catch (error) {
+    console.error("Login error:", error);
+    if (error.response) {
+      showError(toast, error.response.data || "Đăng nhập thất bại. Vui lòng thử lại.");
+    } else if (error.request) {
+      showError(toast, "Không thể kết nối đến server. Vui lòng kiểm tra kết nối mạng.");
+    } else {
+      showError(toast, "Đã xảy ra lỗi. Vui lòng thử lại sau.");
+    }
   }
-}
+};
+
 const handleSubmit = () => {
   if (formState.value === "login") {
     login();
@@ -76,6 +111,7 @@ const loginWithFacebook = async () => {
             name="fullName"
             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
+        <p v-if="fullNameError" class="mt-1 text-sm text-red-600">{{ fullNameError }}</p>
       </div>
       <div class="mb-4">
         <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
@@ -85,6 +121,7 @@ const loginWithFacebook = async () => {
             name="email"
             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
+        <p v-if="emailError" class="mt-1 text-sm text-red-600">{{ emailError }}</p>
       </div>
       <div class="mb-4">
         <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Mật Khẩu</label>
@@ -94,6 +131,7 @@ const loginWithFacebook = async () => {
             name="passwordHash"
             class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
+        <p v-if="passwordError" class="mt-1 text-sm text-red-600">{{ passwordError }}</p>
       </div>
       <div class="mb-4 text-right">
         <a href="#" class="text-sm text-blue-600 hover:text-blue-800">Quên Mật Khẩu?</a>

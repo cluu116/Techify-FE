@@ -1,4 +1,5 @@
 <template>
+  <toast/>
   <div class="min-h-screen bg-gray-100">
     <!-- Hero Section -->
     <div class="bg-gradient-to-r from-blue-600 to-indigo-300 text-white py-16 mb-8">
@@ -130,6 +131,55 @@
       </div>
     </div>
   </div>
+  <Dialog v-model:visible="showCancelModal" :style="{ width: '450px' }" header="Xác nhận hủy đơn hàng" :modal="true">
+    <div class="confirmation-content">
+      <i class="pi pi-exclamation-triangle mr-3" style="font-size: 2rem" />
+      <span>Bạn có chắc chắn muốn hủy đơn hàng này không?</span>
+    </div>
+    <template #footer>
+      <Button label="Không" icon="pi pi-times" @click="closeCancelModal" class="p-button-text"/>
+      <Button label="Có" icon="pi pi-check" @click="confirmCancelOrder" autofocus />
+    </template>
+  </Dialog>
+
+  <Dialog v-model:visible="showModal" :style="{ width: '50vw' }" header="Chi tiết đơn hàng" :modal="true">
+    <div v-if="selectedOrder" class="p-4">
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <h3 class="text-xl font-semibold mb-2">Mã đơn hàng: {{ selectedOrder.id }}</h3>
+          <p><strong>Ngày đặt:</strong> {{ formatDate(selectedOrder.createdAt) }}</p>
+          <p><strong>Khách hàng:</strong> {{ selectedOrder.customerName }}</p>
+          <p><strong>Địa chỉ giao hàng:</strong> {{ selectedOrder.shippingAddress }}</p>
+        </div>
+        <div>
+          <p><strong>Phương thức thanh toán:</strong> {{ selectedOrder.paymentMethodName }}</p>
+          <p><strong>Đơn vị vận chuyển:</strong> {{ selectedOrder.transportVendorName }}</p>
+          <p><strong>Phí vận chuyển:</strong> {{ formatCurrency(selectedOrder.shipPrice) }}</p>
+          <p><strong>Giảm giá:</strong> {{ formatCurrency(selectedOrder.disCountValue) }}</p>
+          <p class="text-lg font-semibold"><strong>Tổng tiền:</strong> {{ formatCurrency(selectedOrder.total) }}</p>
+        </div>
+      </div>
+      <div class="mt-4">
+        <p><strong>Trạng thái:</strong> <span :class="getStatusClass(selectedOrder.status)">{{ getStatusLabel(selectedOrder.status) }}</span></p>
+      </div>
+      <div class="mt-6 flex justify-end">
+        <Button
+            v-if="selectedOrder.status === 1"
+            label="Hủy đơn hàng"
+            icon="pi pi-times"
+            class="p-button-danger"
+            @click="openCancelModal"
+        />
+        <Button
+            v-if="selectedOrder.status === 3"
+            label="Đã nhận được hàng"
+            icon="pi pi-check"
+            class="p-button-success"
+            @click="confirmReceived"
+        />
+      </div>
+    </div>
+  </Dialog>
 </template>
 
 <script>
@@ -147,14 +197,19 @@ export default {
     const searchQuery = ref('');
     const currentPage = ref(1);
     const itemsPerPage = 10;
+    const showModal = ref(false);
+    const selectedOrder = ref({});
 
     const orderTabs = [
       { label: 'Tất cả', value: 'all' },
+      { label: 'Chờ thanh toán', value: 0 },
       { label: 'Chờ xác nhận', value: 1 },
       { label: 'Đang giao', value: 2 },
       { label: 'Đã giao', value: 3 },
       { label: 'Đã hủy', value: 4 },
+      { label: 'Hoàn thành', value: 5 },
     ];
+
 
     const tableHeaders = [
       'Mã đơn hàng',
@@ -216,8 +271,8 @@ export default {
     };
 
     const handleViewDetails = (order) => {
-      // Implement view details logic
-      console.log('View details for order:', order.id);
+      selectedOrder.value = order;
+      showModal.value = true;
     };
 
     const formatCurrency = (value) => {
@@ -230,20 +285,24 @@ export default {
 
     const getStatusLabel = (status) => {
       switch (status) {
+        case 0: return 'Chờ thanh toán';
         case 1: return 'Chờ xác nhận';
         case 2: return 'Đang giao';
         case 3: return 'Đã giao';
         case 4: return 'Đã hủy';
+        case 5: return 'Hoàn thành';
         default: return 'Không xác định';
       }
     };
 
     const getStatusClass = (status) => {
       switch (status) {
+        case 0: return 'bg-orange-100 text-orange-800';
         case 1: return 'bg-yellow-100 text-yellow-800';
         case 2: return 'bg-blue-100 text-blue-800';
         case 3: return 'bg-green-100 text-green-800';
         case 4: return 'bg-red-100 text-red-800';
+        case 5: return 'bg-purple-100 text-purple-800';
         default: return 'bg-gray-100 text-gray-800';
       }
     };
@@ -251,12 +310,138 @@ export default {
     const getTabIcon = (value) => {
       switch (value) {
         case 'all': return 'fas fa-list';
+        case 0: return 'fas fa-wallet';
         case 1: return 'fas fa-clock';
         case 2: return 'fas fa-truck';
         case 3: return 'fas fa-check-circle';
         case 4: return 'fas fa-times-circle';
+        case 5: return 'fas fa-box-check';
         default: return 'fas fa-question-circle';
       }
+    };
+
+    const closeModal = () => {
+      showModal.value = false;
+      selectedOrder.value = {};
+    };
+
+    const showCancelModal = ref(false);
+
+    const openCancelModal = () => {
+      showCancelModal.value = true;
+    };
+
+    const closeCancelModal = () => {
+      showCancelModal.value = false;
+    };
+
+    const updateInventory = async (isCancel = false) => {
+      try {
+        if (!selectedOrder.value || !selectedOrder.value.id) {
+          console.error("Không có thông tin đơn hàng được chọn");
+          return;
+        }
+
+        // Fetch chi tiết đơn hàng
+        const detailsResponse = await api.get(`order_detail/${selectedOrder.value.id}`);
+        const orderDetails = detailsResponse.data;
+
+        if (!Array.isArray(orderDetails)) {
+          console.error("Không tìm thấy chi tiết đơn hàng hoặc dữ liệu không hợp lệ");
+          return;
+        }
+
+        for (const item of orderDetails) {
+          if (!item.productId || !item.quantity) {
+            console.error("Thiếu thông tin sản phẩm hoặc số lượng", item);
+            continue;
+          }
+
+          const currentProductResponse = await api.get(`product/${item.productId}`);
+          const currentInventoryQuantity = currentProductResponse.data.inventoryQuantity;
+          const currentAvailableQuantity= currentProductResponse.data.availableQuantity;
+
+          let newQuantity;
+          if (isCancel) {
+            // Nếu hủy đơn hàng, tăng số lượng tồn kho
+            newQuantity = currentAvailableQuantity + item.quantity;
+            await api.put(`product/AvailableQuantity/${item.productId}`, null, {
+              params: {
+                quantity: newQuantity
+              }
+            });
+          } else {
+            newQuantity = currentInventoryQuantity - item.quantity;
+            await api.put(`product/InventoryQuantity/${item.productId}`, null, {
+              params: {
+                quantity: newQuantity
+              }
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Lỗi khi cập nhật số lượng sản phẩm trong kho:", error);
+        throw error;
+      }
+    };
+
+    const confirmCancelOrder = async () => {
+      try {
+        const response = await api.put(`/order/${selectedOrder.value.id}/status/4`);
+        selectedOrder.value = response.data;
+
+        await updateInventory(true);
+        await fetchOrders();
+
+        toast.add({
+          severity: 'success',
+          summary: 'Thành công',
+          detail: 'Đơn hàng đã được hủy',
+          life: 3000
+        });
+
+        closeCancelModal();
+        closeModal();
+      } catch (error) {
+        console.error('Lỗi khi hủy đơn hàng:', error);
+        toast.add({
+          severity: 'error',
+          summary: 'Lỗi',
+          detail: 'Không thể hủy đơn hàng',
+          life: 3000
+        });
+      }
+    };
+
+    const confirmReceived = async () => {
+      try {
+        const response = await api.put(`/order/${selectedOrder.value.id}/status/5`);
+        selectedOrder.value = response.data;
+
+        await updateInventory(false);
+        await fetchOrders();
+
+        toast.add({
+          severity: 'success',
+          summary: 'Thành công',
+          detail: 'Đã xác nhận nhận được hàng',
+          life: 3000
+        });
+
+        closeModal();
+      } catch (error) {
+        console.error('Lỗi khi xác nhận nhận hàng:', error);
+        toast.add({
+          severity: 'error',
+          summary: 'Lỗi',
+          detail: 'Không thể xác nhận nhận hàng',
+          life: 3000
+        });
+      }
+    };
+
+    const cancelOrder = () => {
+      openCancelModal();
     };
 
     onMounted(fetchOrders);
@@ -283,6 +468,15 @@ export default {
       getStatusLabel,
       getStatusClass,
       getTabIcon,
+      showModal,
+      selectedOrder,
+      closeModal,
+      showCancelModal,
+      openCancelModal,
+      closeCancelModal,
+      confirmCancelOrder,
+      cancelOrder,
+      confirmReceived,
     };
   }
 };
