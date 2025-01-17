@@ -18,6 +18,40 @@ const promotion = ref({
 });
 
 const validatePromotion = () => {
+  if (!promotion.value.name.trim()) {
+    showError(toast, "Tên khuyến mãi không được để trống");
+    return false;
+  }
+
+  if (!promotion.value.description.trim()) {
+    showError(toast, "Mô tả khuyến mãi không được để trống");
+    return false;
+  }
+
+  if (promotion.value.discountValue === null || promotion.value.discountValue === undefined) {
+    showError(toast, "Giá trị giảm giá không được để trống");
+    return false;
+  }
+
+  if (promotion.value.discountValue <= 0) {
+    showError(toast, "Giá trị giảm giá phải lớn hơn 0");
+    return false;
+  }
+
+  if (promotion.value.discountType && promotion.value.discountValue > 100) {
+    showError(toast, "Phần trăm giảm giá không thể lớn hơn 100%");
+    return false;
+  }
+
+  if (!promotion.value.startDate) {
+    showError(toast, "Ngày bắt đầu không được để trống");
+    return false;
+  }
+
+  if (!promotion.value.endDate) {
+    showError(toast, "Ngày kết thúc không được để trống");
+    return false;
+  }
   const now = new Date();
   const startDate = new Date(promotion.value.startDate);
   const endDate = new Date(promotion.value.endDate);

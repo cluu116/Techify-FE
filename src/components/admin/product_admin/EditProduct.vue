@@ -5,6 +5,7 @@ import { useRoute, useRouter } from "vue-router";
 import api from "@/services/ApiService.js";
 import { showError, showSuccess } from "@/services/ToastService.js";
 import getImageUrl from "@/utils/ImageUtils.js";
+import {validateProduct} from "@/services/Validators.js";
 
 const route = useRoute();
 const router = useRouter();
@@ -136,12 +137,40 @@ const removeImage = (index) => {
 
 const updateProduct = async () => {
   try {
+    const productId = formData.value.id;
+    const productData = {
+      id: productId,
+      name: formData.value.name,
+      category: formData.value.category,
+      brand: formData.value.brand,
+      origin: formData.value.origin,
+      unit: formData.value.unit,
+      serial: formData.value.serial,
+      warranty: formData.value.warranty,
+      buyPrice: formData.value.buyPrice,
+      sellPrice: formData.value.sellPrice,
+      tax: formData.value.tax,
+      description: formData.value.description,
+      inventoryQuantity: formData.value.inventoryQuantity,
+      colors: colors.value,
+      sizes: sizes.value,
+      attributes: attributes.value,
+      images: images.value
+    };
+
+    const error = validateProduct(productData);
+    if (error) {
+      showError(toast, error);
+      return;
+    }
     let thumbnailUrl = formData.value.thumbnail;
+    let isNewThumbnail = false;
     if (selectedThumbnail.value) {
       const thumbnailFormData = new FormData();
       thumbnailFormData.append("image", selectedThumbnail.value);
       const thumbnailResponse = await api.post("upload", thumbnailFormData);
       thumbnailUrl = thumbnailResponse.data;
+      isNewThumbnail = true;
     }
 
     const updatedImages = await Promise.all(
@@ -158,7 +187,6 @@ const updateProduct = async () => {
           }
         })
     );
-
     const attributesObj = attributes.value.reduce((acc, curr) => {
       acc[curr.name] = curr.value;
       return acc;
@@ -167,7 +195,7 @@ const updateProduct = async () => {
     const payload = {
       category: { id: formData.value.category },
       name: formData.value.name,
-      thumbnail: thumbnailUrl,
+      thumbnail: isNewThumbnail ? JSON.stringify(thumbnailUrl) : thumbnailUrl,
       brand: formData.value.brand,
       origin: formData.value.origin,
       unit: formData.value.unit,
@@ -186,7 +214,9 @@ const updateProduct = async () => {
 
     await api.put(`product/${formData.value.id}`, payload);
     showSuccess(toast, "Cập nhật sản phẩm thành công");
-    await router.push("/admin/product");
+    setTimeout(async () => {
+      await router.push("/admin/product");
+    }, 1000);
   } catch (error) {
     console.error("Error updating product:", error);
     let errorMessage = "Cập nhật sản phẩm thất bại";

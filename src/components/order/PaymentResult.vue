@@ -195,16 +195,7 @@ const goToHomePage = () => {
 };
 
 const viewOrderDetails = () => {
-  if (paymentResult.value && paymentResult.value.orderId) {
     router.push({ name: 'Đơn mua' });
-  } else {
-    toast.add({
-      severity: 'error',
-      summary: 'Lỗi',
-      detail: 'Không thể xem chi tiết đơn hàng',
-      life: 3000,
-    });
-  }
 };
 </script>
 

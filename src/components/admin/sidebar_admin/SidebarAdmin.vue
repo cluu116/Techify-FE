@@ -58,7 +58,12 @@
         <span class="font-medium text-gray-800">{{ user ? user.fullName : "Đăng Nhập" }}</span>
       </div>
       <div class="flex space-x-2">
-        <Button label="Tài Khoản" icon="pi pi-user" class="p-button-outlined p-button-sm flex-1" to="/"></Button>
+        <Button
+            label="Tài Khoản"
+            icon="pi pi-user"
+            class="p-button-outlined p-button-sm flex-1"
+            @click="$router.push({ name: 'Thông tin' })"
+        ></Button>
         <Button label="Đăng Xuất" icon="pi pi-sign-out" class="p-button-danger p-button-text p-button-sm flex-1"
                 @click="logout"></Button>
       </div>
@@ -80,7 +85,6 @@ const menuItems = computed(() => [
   // Các mục menu chỉ dành cho admin
   ...(isAdmin.value ? [
     { label: 'Trang Chủ', icon: 'pi pi-home', to: '/admin/home' },
-    { label: 'Quản Lý Nhân Viên', icon: 'pi pi-users', to: '/admin/users' },
     { label: 'Quản Lý Phương Thức Thanh Toán', icon: 'pi pi-credit-card', to: '/admin/paymentMethod' }
   ] : []),
 

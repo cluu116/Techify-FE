@@ -4,11 +4,13 @@ import {useDialog, useToast} from "primevue";
 import api, {generateFormData, resetForm} from "@/services/ApiService.js";
 import {showError, showSuccess} from "@/services/ToastService.js";
 import {validateProduct} from "@/services/Validators.js";
+import {useRouter} from "vue-router";
 
 const toast = useToast();
 const fileInput = ref(null)
 const images = ref([])
 const selectedCategory = ref('');
+const router = useRouter();
 
 const stripHtml = (html) => {
   let tmp = document.createElement("DIV");
@@ -42,10 +44,11 @@ const addProduct = async () => {
   try {
     const productId = document.getElementById('productId').value;
 
-    // Kiểm tra xem ID đã tồn tại chưa
-    const checkIdResponse = await api.get(`product/check/${productId}`);
-    if (checkIdResponse.data.exists) {
-      showError(toast, "Mã sản phẩm đã tồn tại. Vui lòng chọn mã khác.");
+    const productData = Object.fromEntries(new FormData(document.getElementById('form_add')));
+
+    const error = validateProduct(productData);
+    if (error) {
+      showError(toast, error);
       return;
     }
 
@@ -54,11 +57,10 @@ const addProduct = async () => {
       return;
     }
 
-    const productData = Object.fromEntries(new FormData(document.getElementById('form_add')));
-
-    const error = validateProduct(productData);
-    if (error) {
-      showError(toast, error);
+    // Kiểm tra xem ID đã tồn tại chưa
+    const checkIdResponse = await api.get(`product/check/${productId}`);
+    if (checkIdResponse.data.exists) {
+      showError(toast, "Mã sản phẩm đã tồn tại. Vui lòng chọn mã khác.");
       return;
     }
 
@@ -90,6 +92,9 @@ const addProduct = async () => {
 
     if (res.status === 200) {
       showSuccess(toast, "Thêm Sản Phẩm Thành Công");
+      setTimeout(async () => {
+        await router.push("/admin/product");
+      }, 1000);
     } else {
       showError(toast, "Thêm Sản Phẩm Thất Bại, Hãy Thử Lại");
     }
@@ -107,7 +112,6 @@ const addColor = () => {
   if (newColor.value.trim() !== '') {
     colors.value.push(newColor.value);
     newColor.value = '';
-    console.log(colors.value)
   }
   const trimmedColor = newColor.value.trim();
   if (trimmedColor !== '' && !colors.value.includes(trimmedColor)) {
@@ -147,7 +151,6 @@ const addAttribute = () => {
     ...attributes.value,
     [attributeName.value]: cleanValue
   }
-  console.log(attributes.value)
   attributeName.value = '';
   attributeValue.value = '';
 }
@@ -157,7 +160,6 @@ const removeAttribute = (key) => {
 const categories = ref([]);
 onMounted(async () => {
   categories.value = (await api.get("category")).data;
-  console.log(categories.value)
 })
 </script>
 
@@ -293,9 +295,7 @@ onMounted(async () => {
                               name="status"
                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent transition"
                               required aria-label="Product Status">
-                        <option value="">Chọn Trạng Thái</option>
-                        <option value="active">Đang Hoạt Động</option>
-                        <option value="comingSoon">Sắp ra mắt</option>
+                        <option value="" selected>Đang Hoạt Động</option>
                       </select>
                     </div>
                   </div>

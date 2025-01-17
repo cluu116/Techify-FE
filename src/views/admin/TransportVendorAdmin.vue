@@ -3,9 +3,10 @@ import {ref, onMounted, computed} from 'vue';
 import {useToast} from "primevue/usetoast";
 import {useConfirm} from "primevue/useconfirm";
 import {useRouter} from "vue-router";
-import api from "@/services/ApiService.js";
+import api, {generateFormData} from "@/services/ApiService.js";
 import {showError, showSuccess} from "@/services/ToastService.js";
 import {showConfirmDelete} from "@/services/MyConfirmService.js";
+import {validateEmail, validateHotlineNumber, validateName} from "@/services/Validators.js";
 
 const toast = useToast();
 const confirm = useConfirm();
@@ -107,6 +108,28 @@ const editVendor = (vendor) => {
 };
 
 const updateVendor = async () => {
+  const nameError = validateName(selectedVendor.value.name);
+  const phoneError = validateHotlineNumber(selectedVendor.value.phone);
+  const emailError = validateEmail(selectedVendor.value.email);
+  const basePriceError = selectedVendor.value.basePrice <= 0 ? "Giá cơ bản phải lớn hơn 0" : null;
+
+  if (nameError) {
+    showError(toast, nameError);
+    return;
+  }
+  if (phoneError) {
+    showError(toast, phoneError);
+    return;
+  }
+  if (emailError) {
+    showError(toast, emailError);
+    return;
+  }
+  if (basePriceError) {
+    showError(toast, basePriceError);
+    return;
+  }
+
   try {
     await api.put(`transport-vendor/${selectedVendor.value.id}`, selectedVendor.value);
     await getTransportVendors();
@@ -118,6 +141,28 @@ const updateVendor = async () => {
 };
 
 const addVendor = async () => {
+  const nameError = validateName(newVendor.value.name);
+  const phoneError = validateHotlineNumber(newVendor.value.phone);
+  const emailError = validateEmail(newVendor.value.email);
+  const basePriceError = newVendor.value.basePrice <= 0 ? "Giá cơ bản phải lớn hơn 0" : null;
+
+  if (nameError) {
+    showError(toast, nameError);
+    return;
+  }
+  if (phoneError) {
+    showError(toast, phoneError);
+    return;
+  }
+  if (emailError) {
+    showError(toast, emailError);
+    return;
+  }
+  if (basePriceError) {
+    showError(toast, basePriceError);
+    return;
+  }
+
   try {
     await api.post('transport-vendor', newVendor.value);
     await getTransportVendors();

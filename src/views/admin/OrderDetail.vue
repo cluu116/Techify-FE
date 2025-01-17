@@ -207,6 +207,10 @@ onMounted(getOrderDetail);
                 <i class="pi pi-truck mr-3 text-blue-500"></i>
                 <span class="font-medium">{{ order.transportVendorName }}</span>
               </div>
+              <div class="flex items-center">
+                <i class="pi pi-phone mr-3 text-blue-500"></i>
+                <span class="font-medium">{{ authService.phone }}</span>
+              </div>
             </div>
           </div>
         </Panel>

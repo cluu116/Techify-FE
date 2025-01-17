@@ -428,14 +428,10 @@ onMounted(async () => {
                   </div>
                 </div>
                 <div>
-                  <label for="phone" class="block text-gray-700 mb-2 font-medium">Số điện thoại</label>
-                  <input
-                      id="phone"
-                      v-model="user.phone"
-                      type="tel"
-                      class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary transition duration-200"
-                      placeholder="Nhập số điện thoại"
-                  />
+                  <label class="block text-gray-700 mb-2 font-medium">Số điện thoại</label>
+                  <div class="w-full p-3 bg-gray-100 border border-gray-300 rounded-lg text-gray-700">
+                    {{ user.phone }}
+                  </div>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>

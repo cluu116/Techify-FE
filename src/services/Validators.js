@@ -46,6 +46,23 @@ export const validateFullName = (fullName) => {
     return "";
 };
 
+export const validateHotlineNumber = (hotlineNumber) => {
+    if (!hotlineNumber) {
+        return "Số điện thoại không được để trống";
+    }
+    const cleanedNumber = hotlineNumber.replace(/[\s.-]/g, '');
+
+    if (!cleanedNumber.startsWith('1800') && !cleanedNumber.startsWith('1900')) {
+        return "Số điện thoại phải bắt đầu bằng 1800 hoặc 1900";
+    }
+
+    if (cleanedNumber.length < 8 || cleanedNumber.length > 11) {
+        return "Số điện thoại phải có từ 8 đến 11 số";
+    }
+
+    return "";
+};
+
 export const validatePhoneNumber = (phoneNumber) => {
     if (!phoneNumber) {
         return "Số điện thoại không được để trống";
@@ -242,17 +259,21 @@ export const validateProduct = (product) => {
     }
 
 
-    if (!product.tax) {
+    if (product.tax === undefined || product.tax === null || product.tax === '') {
         return "Thuế không được để trống";
-    } else if (isNaN(product.tax) || product.tax < 0 || product.tax > 100) {
-        return "Thuế phải là số từ 0 đến 100";
+    } else {
+        const taxValue = parseFloat(product.tax);
+        if (isNaN(taxValue) || taxValue < 0 || taxValue > 100) {
+            return "Thuế phải là số từ 0 đến 100";
+        }
+        product.tax = taxValue;
     }
 
     if (!product.description) {
         return "Mô tả sản phẩm không được để trống";
     } else if (product.description.length < 10) {
         return "Mô tả sản phẩm phải có ít nhất 10 ký tự";
-    } else if (product.description.length > 1000) {
+    } else if (product.description.length > 255) {
         return "Mô tả sản phẩm không được vượt quá 255 ký tự";
     }
 

@@ -72,7 +72,12 @@ const fetchProducts = async () => {
       thumbnail: product.thumbnail
     }));
   } catch (error) {
-    showError(toast, 'Lỗi khi tải danh sách sản phẩm');
+    if (error.response && error.response.status === 404) {
+      products.value = [];
+    } else {
+      products.value = [];
+      showError(toast, 'Không còn sản phẩm có thể áp dụng');
+    }
   } finally {
     loading.value = false;
   }
@@ -81,7 +86,6 @@ const fetchProducts = async () => {
 const applyPromotion = async () => {
   try {
     const productIds = tempSelectedProducts.value.map(product => product.productId);
-    console.log('Product IDs being sent:', productIds);
     await api.post(`promotions/${promotionId.value}/products`, productIds);
     selectedProducts.value = [...selectedProducts.value, ...tempSelectedProducts.value];
     tempSelectedProducts.value = [];

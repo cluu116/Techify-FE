@@ -388,6 +388,12 @@ export default {
       }
 
       try {
+        const checkPhoneResponse = await api.get(`/customers/check-phone/${userInfo.value.phone}`);
+        if (checkPhoneResponse.data.exists && checkPhoneResponse.data.userId !== authService.id) {
+          showError(toast, "Số điện thoại đã được sử dụng bởi tài khoản khác");
+          return;
+        }
+
         const userId  = authService.id;
         const updateDTO = {
           phone: userInfo.value.phone,

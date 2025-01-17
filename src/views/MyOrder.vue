@@ -131,6 +131,7 @@
       </div>
     </div>
   </div>
+
   <Dialog v-model:visible="showCancelModal" :style="{ width: '450px' }" header="Xác nhận hủy đơn hàng" :modal="true">
     <div class="confirmation-content">
       <i class="pi pi-exclamation-triangle mr-3" style="font-size: 2rem" />
@@ -142,53 +143,115 @@
     </template>
   </Dialog>
 
-  <Dialog v-model:visible="showModal" :style="{ width: '50vw' }" header="Chi tiết đơn hàng" :modal="true">
+  <Dialog v-model:visible="showModal" :style="{ width: '70vw' }" header="Chi tiết đơn hàng" :modal="true" class="p-fluid">
     <div v-if="selectedOrder" class="p-4">
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <h3 class="text-xl font-semibold mb-2">Mã đơn hàng: {{ selectedOrder.id }}</h3>
-          <p><strong>Ngày đặt:</strong> {{ formatDate(selectedOrder.createdAt) }}</p>
-          <p><strong>Khách hàng:</strong> {{ selectedOrder.customerName }}</p>
-          <p><strong>Địa chỉ giao hàng:</strong> {{ selectedOrder.shippingAddress }}</p>
+      <div class="grid">
+        <div class="col-12 md:col-6 lg:col-4">
+          <div class="p-card p-4 h-full">
+            <h3 class="text-xl font-bold mb-4 text-blue-700">Thông tin đơn hàng</h3>
+            <p class="mb-2"><i class="pi pi-id-card mr-2"></i><strong>Mã đơn hàng:</strong> {{ selectedOrder.id }}</p>
+            <p class="mb-2"><i class="pi pi-calendar mr-2"></i><strong>Ngày đặt:</strong> {{ formatDate(selectedOrder.createdAt) }}</p>
+            <p class="mb-2"><i class="pi pi-user mr-2"></i><strong>Khách hàng:</strong> {{ selectedOrder.customerName }}</p>
+            <p class="mb-2"><i class="pi pi-phone mr-2"></i><strong>Số điện thoại:</strong> {{ authService.phone || 'N/A' }}</p>
+            <p class="mb-2"><i class="pi pi-map-marker mr-2"></i><strong>Địa chỉ giao hàng:</strong> {{ selectedOrder.shippingAddress }}</p>
+          </div>
         </div>
-        <div>
-          <p><strong>Phương thức thanh toán:</strong> {{ selectedOrder.paymentMethodName }}</p>
-          <p><strong>Đơn vị vận chuyển:</strong> {{ selectedOrder.transportVendorName }}</p>
-          <p><strong>Phí vận chuyển:</strong> {{ formatCurrency(selectedOrder.shipPrice) }}</p>
-          <p><strong>Giảm giá:</strong> {{ formatCurrency(selectedOrder.disCountValue) }}</p>
-          <p class="text-lg font-semibold"><strong>Tổng tiền:</strong> {{ formatCurrency(selectedOrder.total) }}</p>
+        <div class="col-12 md:col-6 lg:col-4">
+          <div class="p-card p-4 h-full">
+            <h3 class="text-xl font-bold mb-4 text-blue-700">Chi tiết thanh toán</h3>
+            <p class="mb-2"><i class="pi pi-wallet mr-2"></i><strong>Phương thức thanh toán:</strong> {{ selectedOrder.paymentMethodName }}</p>
+            <p class="mb-2"><i class="pi pi-truck mr-2"></i><strong>Đơn vị vận chuyển:</strong> {{ selectedOrder.transportVendorName }}</p>
+            <p class="mb-2"><i class="pi pi-dollar mr-2"></i><strong>Phí vận chuyển:</strong> {{ formatCurrency(selectedOrder.shipPrice) }}</p>
+            <p class="mb-2"><i class="pi pi-percentage mr-2"></i><strong>Giảm giá:</strong> {{ formatCurrency(selectedOrder.disCountValue) }}</p>
+            <p class="text-lg font-semibold mt-4"><i class="pi pi-money-bill mr-2"></i><strong>Tổng tiền:</strong> {{ formatCurrency(selectedOrder.total) }}</p>
+          </div>
+        </div>
+        <div class="col-12 lg:col-4">
+          <div class="p-card p-4 h-full">
+            <h3 class="text-xl font-bold mb-4 text-blue-700">Trạng thái đơn hàng</h3>
+            <p class="mb-4">
+            <span :class="['p-2 rounded-full text-white font-semibold', getStatusBackgroundClass(selectedOrder.status)]">
+              {{ getStatusLabel(selectedOrder.status) }}
+            </span>
+            </p>
+            <div v-if="selectedOrder.status === 1" class="mb-2">
+              <Button label="Hủy đơn hàng" icon="pi pi-times" class="p-button-danger p-button-outlined" @click="openCancelModal" />
+            </div>
+            <div v-if="selectedOrder.status === 3" class="mb-2">
+              <Button label="Đã nhận được hàng" icon="pi pi-check" class="p-button-success" @click="confirmReceived" />
+            </div>
+          </div>
         </div>
       </div>
-      <div class="mt-4">
-        <p><strong>Trạng thái:</strong> <span :class="getStatusClass(selectedOrder.status)">{{ getStatusLabel(selectedOrder.status) }}</span></p>
-      </div>
-      <div class="mt-6 flex justify-end">
-        <Button
-            v-if="selectedOrder.status === 1"
-            label="Hủy đơn hàng"
-            icon="pi pi-times"
-            class="p-button-danger"
-            @click="openCancelModal"
-        />
-        <Button
-            v-if="selectedOrder.status === 3"
-            label="Đã nhận được hàng"
-            icon="pi pi-check"
-            class="p-button-success"
-            @click="confirmReceived"
-        />
+
+      <div class="col-span-full">
+        <Panel header="Chi Tiết Sản Phẩm" class="shadow-md">
+          <DataTable
+              :value="orderDetails"
+              responsiveLayout="scroll"
+              class="p-datatable-sm"
+              stripedRows
+          >
+            <Column header="Sản Phẩm" style="min-width: 300px">
+              <template #body="slotProps">
+                <div class="flex items-center gap-4">
+                  <img
+                      class="w-16 h-16 object-cover rounded-lg shadow-sm"
+                      :src="getImageUrl(slotProps.data.productThumbnail)"
+                      :alt="slotProps.data.productName"
+                  />
+                  <div>
+                    <div class="font-medium mb-1">
+                      {{ slotProps.data.productName }}
+                    </div>
+                    <span class="text-gray-500 text-sm">
+                      Màu: {{ slotProps.data.color }}
+                      <template v-if="slotProps.data.size">
+                        | Size: {{ slotProps.data.size }}
+                      </template>
+                    </span>
+                  </div>
+                </div>
+              </template>
+            </Column>
+            <Column field="price" header="Đơn Giá" style="width: 150px">
+              <template #body="slotProps">
+                {{ slotProps.data.price.toLocaleString("vi-VN") }}đ
+              </template>
+            </Column>
+            <Column field="quantity" header="Số Lượng" style="width: 100px">
+              <template #body="slotProps">
+                <span class="font-medium">× {{ slotProps.data.quantity }}</span>
+              </template>
+            </Column>
+            <Column field="total" header="Thành Tiền" style="width: 150px">
+              <template #body="slotProps">
+                <span class="text-blue-600 font-medium">
+                  {{ slotProps.data.total.toLocaleString("vi-VN") }}đ
+                </span>
+              </template>
+            </Column>
+          </DataTable>
+        </Panel>
       </div>
     </div>
   </Dialog>
 </template>
 
 <script>
-import { ref, computed, onMounted, watch } from "vue";
+import {ref, computed, onMounted, watch} from "vue";
 import api from "@/services/ApiService";
-import { useToast } from "primevue/usetoast";
-import { authService } from "@/services/AuthService.js";
+import {useToast} from "primevue/usetoast";
+import {authService} from "@/services/AuthService.js";
+import getImageUrl from "@/utils/ImageUtils.js";
 
 export default {
+  computed: {
+    authService() {
+      return authService
+    }
+  },
+  methods: {getImageUrl},
   setup() {
     const toast = useToast();
     const orders = ref([]);
@@ -199,6 +262,7 @@ export default {
     const itemsPerPage = 10;
     const showModal = ref(false);
     const selectedOrder = ref({});
+    const orderDetails = ref([]);
 
     const orderTabs = [
       { label: 'Tất cả', value: 'all' },
@@ -210,6 +274,17 @@ export default {
       { label: 'Hoàn thành', value: 5 },
     ];
 
+    const getStatusBackgroundClass = (status) => {
+      switch (status) {
+        case 0: return 'bg-orange-500';
+        case 1: return 'bg-yellow-500';
+        case 2: return 'bg-blue-500';
+        case 3: return 'bg-green-500';
+        case 4: return 'bg-red-500';
+        case 5: return 'bg-purple-500';
+        default: return 'bg-gray-500';
+      }
+    };
 
     const tableHeaders = [
       'Mã đơn hàng',
@@ -250,6 +325,20 @@ export default {
       });
     });
 
+    const getOrderDetail = async (orderId) => {
+      try {
+        const [orderResponse, detailsResponse] = await Promise.all([
+          api.get(`order/${orderId}`),
+          api.get(`order_detail/${orderId}`),
+        ]);
+        selectedOrder.value = orderResponse.data;
+        orderDetails.value = detailsResponse.data;
+      } catch (error) {
+        console.error('Error fetching order details:', error);
+        toast.add({ severity: 'error', summary: 'Lỗi', detail: 'Không thể tải thông tin đơn hàng', life: 3000 });
+      }
+    };
+
     const paginatedOrders = computed(() => {
       const startIndex = (currentPage.value - 1) * itemsPerPage;
       const endIndex = startIndex + itemsPerPage;
@@ -270,8 +359,8 @@ export default {
       currentPage.value = 1;
     };
 
-    const handleViewDetails = (order) => {
-      selectedOrder.value = order;
+    const handleViewDetails = async (order) => {
+      await getOrderDetail(order.id);
       showModal.value = true;
     };
 
@@ -477,6 +566,9 @@ export default {
       confirmCancelOrder,
       cancelOrder,
       confirmReceived,
+      getStatusBackgroundClass,
+      orderDetails,
+      getOrderDetail,
     };
   }
 };

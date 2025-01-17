@@ -159,11 +159,11 @@ import { ref, onMounted } from "vue";
 
 const bannerImages = ref([
   {
-    url: "https://img.freepik.com/free-psd/black-friday-super-sale-social-media-banner-template_106176-1471.jpg",
+    url: "https://shofy-nuxt.vercel.app/img/slider/slider-img-3.png",
     alt: "Tech Sale Banner",
   },
   {
-    url: "https://img.freepik.com/free-psd/horizontal-banner-template-black-friday-clearance_23-2148745446.jpg",
+    url: "https://res.cloudinary.com/dg0jb8avp/image/upload/v1737155859/A%CC%89nh_chu%CC%A3p_ma%CC%80n_hi%CC%80nh_2025-01-18_061555_xlg2lr.png",
     alt: "Electronics Deals",
   },
   {

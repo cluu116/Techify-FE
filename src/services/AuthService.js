@@ -43,7 +43,6 @@ export const authService = reactive({
                 this.dob = data.dob;
                 this.gender = data.gender;
                 this.citizenId = data.citizenId;
-                console.log(data)
                 return data;
             } catch (error) {
                 if (error.response) {
@@ -77,7 +76,7 @@ export const authService = reactive({
         } catch (error) {
             console.error("Failed to refresh token:", error);
             this.logout();
-            window.location.href = "/login";
+            window.location.href = "/";
         }
     },
 

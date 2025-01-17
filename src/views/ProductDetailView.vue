@@ -187,8 +187,8 @@
       <!-- Actions -->
       <div class="mt-4 flex space-x-2">
         <a
-            @click="handleAddToCart"
-            href="/checkout"
+            href="javascript:void(0)"
+            @click.prevent="handleBuyNow"
             class="bb-btn-2 transition-all duration-[0.3s] ease-in-out h-[40px] flex font-Poppins leading-[28px] tracking-[0.03rem] py-[6px] px-[25px] text-[14px] font-normal text-[#fff] bg-[#ff6b6b] rounded-[10px] border-[1px] border-solid border-[#6c7fd8] hover:bg-[#e65a5a] hover:border-[#e65a5a] hover:text-[#fff]"
         >
           Mua hàng
@@ -594,7 +594,7 @@
 
 <script setup>
 import {ref, computed, nextTick, watch} from 'vue';
-import {useRoute} from "vue-router";
+import {useRoute, useRouter} from "vue-router";
 import {onMounted} from "vue";
 import api from "@/services/ApiService";
 import {addToCart, getCart} from "@/services/CartService.js";
@@ -604,6 +604,7 @@ import {formatCurrency} from "@/utils/formatters";
 import {authService} from "@/services/AuthService.js";
 
 const route = useRoute();
+const router = useRouter();
 const toast = useToast();
 const detailProduct = ref(null);
 const quantity = ref(1);
@@ -894,40 +895,115 @@ const hasSizes = computed(() => {
   return parsedSizes.value && parsedSizes.value.length > 0;
 });
 
-const getCurrentCartQuantity = (productId, color, size) => {
+const getCurrentCartQuantity = (productId) => {
   const cart = getCart().value;
-  const cartItem = cart.find(item =>
-      item.productId === productId &&
-      item.color === color &&
-      (size === null || size === '' || item.size === size)
-  );
-  return cartItem ? cartItem.quantity : 0;
+  return cart.reduce((total, item) => {
+    if (item.productId === productId) {
+      return total + item.quantity;
+    }
+    return total;
+  }, 0);
+};
+
+const handleBuyNow = async () => {
+  if (await validateAndAddToCart()) {
+    await router.push('/checkout');
+  }
+};
+
+const validateAndAddToCart = async () => {
+  try {
+    if (!selectedColor.value && detailProduct.value.colors && detailProduct.value.colors.length > 0) {
+      toast.add({
+        severity: 'warn',
+        summary: 'Chú ý',
+        detail: 'Vui lòng chọn màu sắc',
+        life: 3000
+      });
+      return false;
+    }
+    if (hasSizes.value && !selectedSize.value) {
+      toast.add({
+        severity: 'warn',
+        summary: 'Chú ý',
+        detail: 'Vui lòng chọn kích thước',
+        life: 3000
+      });
+      return false;
+    }
+    if (quantity.value <= 0 || quantity.value > detailProduct.value.availableQuantity) {
+      toast.add({
+        severity: 'warn',
+        summary: 'Chú ý',
+        detail: 'Số lượng không hợp lệ',
+        life: 3000
+      });
+      return false;
+    }
+
+    // Nếu tất cả điều kiện đều hợp lệ, thêm vào giỏ hàng
+    handleAddToCart();
+    return true;
+  } catch (error) {
+    console.error('Lỗi khi thêm vào giỏ hàng:', error);
+    toast.add({
+      severity: 'error',
+      summary: 'Lỗi',
+      detail: 'Có lỗi xảy ra khi thêm vào giỏ hàng',
+      life: 3000
+    });
+    return false;
+  }
 };
 
 const handleAddToCart = () => {
   try {
     if (!selectedColor.value) {
-      throw new Error("Vui lòng chọn màu sắc");
+      toast.add({
+        severity: 'warn',
+        summary: 'Chú ý',
+        detail: 'Vui lòng chọn màu sắc',
+        life: 3000
+      });
+      return;
     }
 
+    // Kiểm tra kích thước
     if (hasSizes.value && !selectedSize.value) {
-      throw new Error("Vui lòng chọn kích thước");
+      toast.add({
+        severity: 'warn',
+        summary: 'Chú ý',
+        detail: 'Vui lòng chọn kích thước',
+        life: 3000
+      });
+      return;
     }
 
+    // Kiểm tra thông tin sản phẩm
     if (!detailProduct.value || !detailProduct.value.id) {
-      throw new Error("Thông tin sản phẩm không hợp lệ");
+      toast.add({
+        severity: 'error',
+        summary: 'Lỗi',
+        detail: 'Thông tin sản phẩm không hợp lệ',
+        life: 3000
+      });
+      return;
     }
 
+    // Kiểm tra số lượng
     if (quantity.value <= 0) {
-      throw new Error("Số lượng sản phẩm phải lớn hơn 0");
+      toast.add({
+        severity: 'warn',
+        summary: 'Chú ý',
+        detail: 'Số lượng sản phẩm phải lớn hơn 0',
+        life: 3000
+      });
+      return;
     }
 
     // Kiểm tra số lượng hiện có trong giỏ hàng
-    const currentCartQuantity = getCurrentCartQuantity(
-        detailProduct.value.id,
-        selectedColor.value,
-        selectedSize.value
-    );
+    const currentCartQuantity = getCurrentCartQuantity(detailProduct.value.id);
+
     const totalQuantity = currentCartQuantity + quantity.value;
 
     if (totalQuantity > detailProduct.value.availableQuantity) {
@@ -969,6 +1045,7 @@ const handleAddToCart = () => {
     });
   }
 };
+
 
 const selectImage = (image) => {
   selectedImage.value = image;
