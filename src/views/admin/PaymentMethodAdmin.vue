@@ -6,6 +6,7 @@ import api from "@/services/ApiService.js";
 import { showError, showSuccess } from "@/services/ToastService.js";
 import { showConfirmDelete } from "@/services/MyConfirmService.js";
 import { useRouter } from "vue-router";
+import {validateName} from "@/services/Validators.js";
 
 const toast = useToast();
 const confirm = useConfirm();
@@ -102,6 +103,11 @@ const editPaymentMethod = (paymentMethod) => {
 };
 
 const updatePaymentMethod = async () => {
+  const nameError = validateName(selectedPaymentMethod.value.name);
+  if (nameError) {
+    showError(toast, nameError);
+    return;
+  }
   try {
     await api.put(`payment-method/${selectedPaymentMethod.value.id}`, selectedPaymentMethod.value);
     await getPaymentMethods();
@@ -113,6 +119,11 @@ const updatePaymentMethod = async () => {
 };
 
 const addPaymentMethod = async () => {
+  const nameError = validateName(newPaymentMethod.value.name);
+  if (nameError) {
+    showError(toast, nameError);
+    return;
+  }
   try {
     await api.post('payment-method', newPaymentMethod.value);
     await getPaymentMethods();

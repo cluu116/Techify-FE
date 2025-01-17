@@ -3,10 +3,12 @@ import {computed, onMounted, ref} from "vue";
 import {useDialog, useToast} from "primevue";
 import api, {generateFormData, resetForm} from "@/services/ApiService.js";
 import {showError, showSuccess} from "@/services/ToastService.js";
+import {validateProduct} from "@/services/Validators.js";
 
 const toast = useToast();
 const fileInput = ref(null)
 const images = ref([])
+const selectedCategory = ref('');
 
 const stripHtml = (html) => {
   let tmp = document.createElement("DIV");
@@ -44,6 +46,19 @@ const addProduct = async () => {
     const checkIdResponse = await api.get(`product/check/${productId}`);
     if (checkIdResponse.data.exists) {
       showError(toast, "Mã sản phẩm đã tồn tại. Vui lòng chọn mã khác.");
+      return;
+    }
+
+    if (!selectedCategory.value) {
+      showError(toast, "Vui lòng chọn loại sản phẩm");
+      return;
+    }
+
+    const productData = Object.fromEntries(new FormData(document.getElementById('form_add')));
+
+    const error = validateProduct(productData);
+    if (error) {
+      showError(toast, error);
       return;
     }
 
@@ -176,11 +191,12 @@ onMounted(async () => {
                     <div class="space-y-2">
                       <label class="text-gray-600 font-medium" for="category">Loại Sản Phẩm</label>
                       <select id="category"
+                              v-model="selectedCategory"
                               name="category"
                               class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent transition"
                               required aria-label="Product Category">
-                        <option value="">Chọn Loại Sản Phẩm</option>
-                        <option v-for="category in categories" :value="category.id">{{ category.name }}</option>
+                        <option value="" disabled>Chọn Loại Sản Phẩm</option>
+                        <option v-for="category in categories" :key="category.id" :value="category.id">{{ category.name }}</option>
                       </select>
                     </div>
 
@@ -226,7 +242,7 @@ onMounted(async () => {
 
                     <div class="space-y-2">
                       <label class="text-gray-600 font-medium" for="inventoryQuantity">Số Lượng Tồn Kho</label>
-                      <input type="number" id="inventoryQuantity" min="1"
+                      <input type="number" id="inventoryQuantity" min="1" step="1"
                              name="inventoryQuantity"
                              class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent transition"
                              required aria-label="Stock Quantity"/>
@@ -242,7 +258,7 @@ onMounted(async () => {
 
                     <div class="space-y-2">
                       <label class="text-gray-600 font-medium" for="warranty">Bảo Hành (Tháng)</label>
-                      <input type="number" id="warranty" min="0"
+                      <input type="number" id="warranty" min="0" step="1"
                              name="warranty"
                              class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-400 focus:border-transparent transition"
                              required aria-label="Warranty"/>

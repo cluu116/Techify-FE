@@ -54,8 +54,7 @@
                       <form @submit.prevent="updateProfile" class="space-y-6">
                         <div class="flex flex-wrap -mx-3 mb-6">
                           <div class="w-full px-3">
-                            <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
-                                   for="fullName">
+                            <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="fullName">
                               Họ và tên
                             </label>
                             <input
@@ -63,13 +62,13 @@
                                 v-model="userInfo.fullName"
                                 class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
                                 type="text"
+                                :readonly="userInfo.role === 'STAFF'"
                             />
                           </div>
                         </div>
                         <div class="flex flex-wrap -mx-3 mb-6">
                           <div class="w-full px-3">
-                            <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2"
-                                   for="email">
+                            <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="email">
                               Email
                             </label>
                             <input
@@ -81,8 +80,59 @@
                             />
                           </div>
                         </div>
+
+                        <template v-if="['STAFF', 'ADMIN'].includes(userInfo.role)">
+                          <div class="flex flex-wrap -mx-3 mb-6">
+                            <div class="w-full px-3">
+                              <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="dob">
+                                Ngày sinh
+                              </label>
+                              <input
+                                  id="dob"
+                                  v-model="userInfo.dob"
+                                  class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+                                  type="date"
+                                  :readonly="userInfo.role === 'STAFF'"
+                              />
+                            </div>
+                          </div>
+                          <div class="flex flex-wrap -mx-3 mb-6">
+                            <div class="w-full px-3">
+                              <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="gender">
+                                Giới tính
+                              </label>
+                              <select
+                                  id="gender"
+                                  v-model="userInfo.gender"
+                                  class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+                                  :disabled="userInfo.role === 'STAFF'"
+                              >
+                                <option value="">Chọn giới tính</option>
+                                <option value="Nam">Nam</option>
+                                <option value="Nữ">Nữ</option>
+                                <option value="Khác">Khác</option>
+                              </select>
+                            </div>
+                          </div>
+                          <div class="flex flex-wrap -mx-3 mb-6">
+                            <div class="w-full px-3">
+                              <label class="block uppercase tracking-wide text-gray-700 text-xs font-bold mb-2" for="citizenId">
+                                CMND/CCCD
+                              </label>
+                              <input
+                                  id="citizenId"
+                                  v-model="userInfo.citizenId"
+                                  class="appearance-none block w-full bg-gray-200 text-gray-700 border border-gray-200 rounded py-3 px-4 leading-tight focus:outline-none focus:bg-white focus:border-gray-500"
+                                  type="text"
+                                  :readonly="userInfo.role === 'STAFF'"
+                              />
+                            </div>
+                          </div>
+                        </template>
+
                         <div class="flex items-center justify-between">
                           <button
+                              v-if="userInfo.role !== 'STAFF'"
                               type="submit"
                               class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                           >
@@ -125,6 +175,7 @@
                           type="tel"
                           class="w-2/3 p-2 border rounded"
                           v-model="userInfo.phone"
+                          :readonly="userInfo.role === 'STAFF'"
                       />
                     </div>
                     <div class="flex items-center mb-4">
@@ -134,6 +185,7 @@
                             class="w-full p-2 border rounded appearance-none bg-white"
                             v-model="userInfo.province"
                             @change="onProvinceChange"
+                            :disabled="userInfo.role === 'STAFF'"
                         >
                           <option value="">Chọn Tỉnh/Thành phố</option>
                           <option v-for="province in provinces" :key="province.code" :value="province.code">
@@ -152,7 +204,7 @@
                             class="w-full p-2 border rounded appearance-none bg-white"
                             v-model="userInfo.district"
                             @change="onDistrictChange"
-                            :disabled="!userInfo.province"
+                            :disabled="!userInfo.province || userInfo.role === 'STAFF'"
                         >
                           <option value="">Chọn Quận/Huyện</option>
                           <option v-for="district in districts" :key="district.code" :value="district.code">
@@ -170,7 +222,7 @@
                         <select
                             class="w-full p-2 border rounded appearance-none bg-white"
                             v-model="userInfo.ward"
-                            :disabled="!userInfo.district"
+                            :disabled="!userInfo.district || userInfo.role === 'STAFF'"
                         >
                           <option value="">Chọn Xã/Phường</option>
                           <option v-for="ward in wards" :key="ward.code" :value="ward.code">
@@ -188,9 +240,11 @@
                           type="text"
                           class="w-2/3 p-2 border rounded"
                           v-model="userInfo.address"
+                          :readonly="userInfo.role === 'STAFF'"
                       />
                     </div>
                     <button
+                        v-if="userInfo.role !== 'STAFF'"
                         type="submit"
                         class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                     >
@@ -251,7 +305,13 @@ import {getProvinces, getDistricts, getWards} from "vietnam-provinces";
 import api from "@/services/ApiService.js";
 import {useToast} from "primevue";
 import {showError, showSuccess} from "@/services/ToastService.js";
-import {validateFullName, validatePassword, validatePhoneNumber} from "@/services/Validators.js";
+import {
+  validateAddress, validateCitizenId, validateDateOfBirth,
+  validateFullName,
+  validateGender,
+  validatePassword,
+  validatePhoneNumber
+} from "@/services/Validators.js";
 
 export default {
   setup() {
@@ -268,7 +328,7 @@ export default {
     const showNewPassword = ref(false);
     const showConfirmPassword = ref(false);
     const fullNameError = ref("");
-    const phoneError = ref("");
+    const addressError  = ref("");
     const passwordError = ref("");
     const currentPasswordError = ref("");
 
@@ -283,10 +343,11 @@ export default {
           district: authService.district,
           ward: authService.ward,
           address: authService.address,
-          altAddress: authService.altAddress,
-          altPhone: authService.altPhone,
           role: authService.role,
           avatar: authService.avatar,
+          citizenId: authService.citizenId,
+          dob: authService.dob,
+          gender: authService.gender,
         };
         provinces.value = getProvinces();
         if (userInfo.value.province) {
@@ -313,14 +374,21 @@ export default {
     };
 
     const updateAddress = async () => {
-      phoneError.value = validatePhoneNumber(userInfo.value.phone);
-      if (phoneError.value) {
-        showError(toast, phoneError.value);
+      addressError.value = validateAddress(
+          userInfo.value.province,
+          userInfo.value.district,
+          userInfo.value.ward,
+          userInfo.value.address,
+          userInfo.value.phone
+      );
+
+      if (addressError.value) {
+        showError(toast, addressError.value);
         return;
       }
 
       try {
-        const customerId = authService.id;
+        const userId  = authService.id;
         const updateDTO = {
           phone: userInfo.value.phone,
           province: userInfo.value.province,
@@ -329,7 +397,12 @@ export default {
           address: userInfo.value.address
         };
 
-        const response = await api.put(`/customers/${customerId}`, updateDTO);
+        let response;
+        if (userInfo.value.role === 'ADMIN' || userInfo.value.role === 'STAFF') {
+          response = await api.put(`/staff/${userId}`, updateDTO);
+        } else {
+          response = await api.put(`/customers/${userId}`, updateDTO);
+        }
 
         if (response.status === 200) {
           console.log("Address updated successfully", response.data);
@@ -366,33 +439,60 @@ export default {
       }
 
       try {
-        const customerId = authService.id;
-        const updateDTO = {
+        const userId = authService.id;
+        let updateDTO = {
           fullName: userInfo.value.fullName
         };
 
-        const response = await api.put(`/customers/${customerId}`, updateDTO);
+        let response;
+        if (userInfo.value.role === 'ADMIN') {
+          updateDTO = {
+            ...updateDTO,
+            dob: userInfo.value.dob,
+            citizenId: userInfo.value.citizenId,
+            gender: userInfo.value.gender
+          };
+
+          const dobError = validateDateOfBirth(updateDTO.dob);
+          if (dobError) {
+            showError(toast, dobError);
+            return;
+          }
+
+          const citizenIdError = validateCitizenId(updateDTO.citizenId);
+          if (citizenIdError) {
+            showError(toast, citizenIdError);
+            return;
+          }
+
+          const genderError = validateGender(updateDTO.gender);
+          if (genderError) {
+            showError(toast, genderError);
+            return;
+          }
+
+          response = await api.put(`/staff/${userId}`, updateDTO);
+        } else {
+          response = await api.put(`/customers/${userId}`, updateDTO);
+        }
 
         if (response.status === 200) {
-          console.log("Profile updated successfully", response.data);
           showSuccess(toast, "Thông tin đã được cập nhật thành công");
+
+          authService.userFullName = userInfo.value.fullName;
+          Object.assign(userInfo.value, response.data);
         } else {
           throw new Error("Failed to update profile");
         }
       } catch (error) {
-        console.error("Error updating profile:", error);
         let errorMessage = "Có lỗi xảy ra khi cập nhật thông tin";
 
         if (error.response) {
-          console.error("Response data:", error.response.data);
-          console.error("Response status:", error.response.status);
-          console.error("Response headers:", error.response.headers);
           errorMessage = error.response.data.message || errorMessage;
         } else if (error.request) {
-          console.error("No response received:", error.request);
           errorMessage = "Không nhận được phản hồi từ máy chủ";
         } else {
-          console.error("Error setting up request:", error.message);
+
         }
 
         showError(toast, errorMessage);
@@ -531,6 +631,7 @@ export default {
       onProvinceChange,
       onDistrictChange,
       updateAddress,
+      addressError,
       oldPassword,
       newPassword,
       confirmPassword,

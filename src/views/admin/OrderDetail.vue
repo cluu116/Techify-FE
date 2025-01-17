@@ -11,12 +11,24 @@ import {
   getOrderStatusSeverity,
 } from "@/utils/formatters.js";
 import getImageUrl from "@/utils/ImageUtils.js";
+import {authService} from "@/services/AuthService.js";
 
 const route = useRoute();
 const router = useRouter();
 const toast = useToast();
 const order = ref(null);
 const orderDetails = ref([]);
+
+const assignStaffToOrder = async (orderId, staffId) => {
+  try {
+    const response = await api.put(`order/${orderId}/assign-staff/${staffId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Error assigning staff to order:", error);
+    throw error;
+  }
+};
+
 
 const updateInventory = async () => {
   try {
@@ -58,7 +70,20 @@ const updateOrderStatus = async (newStatus) => {
     );
     order.value = response.data;
 
-    if (newStatus === 4) {
+    if (newStatus === 2) {
+      try {
+        await authService.getUserInfo();
+        const staffId = authService.id;
+        if (staffId) {
+          await assignStaffToOrder(order.value.id, staffId);
+        } else {
+          showError(toast, "Không thể gán nhân viên cho đơn hàng");
+        }
+      } catch (error) {
+        console.error("Lỗi khi lấy thông tin người dùng:", error);
+        showError(toast, "Không thể lấy thông tin nhân viên");
+      }
+    } else if (newStatus === 4) {
       await updateInventory();
     }
 

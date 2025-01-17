@@ -5,6 +5,7 @@ import api, { generateFormData } from "@/services/ApiService.js";
 import { showError, showSuccess } from "@/services/ToastService.js";
 import { categoryStore } from "@/services/categoryStore.js";
 import getImageUrl from "@/utils/ImageUtils.js";
+import {validateName} from "@/services/Validators.js";
 
 const toast = useToast();
 
@@ -73,6 +74,15 @@ const update = async () => {
   }
 
   try {
+    const formData = generateFormData("form_update");
+    const categoryName = formData.get('name');
+
+    const nameError = validateName(categoryName);
+    if (nameError) {
+      showError(toast, nameError);
+      return;
+    }
+
     let imageUrl = null;
     if (selectedImage.value && selectedImage.value.file) {
       const imageFormData = new FormData();
@@ -83,7 +93,6 @@ const update = async () => {
       imageUrl = imageResponse.data;
     }
 
-    const formData = generateFormData("form_update");
     if (imageUrl) {
       formData.append('thumbnail', JSON.stringify(imageUrl));
     } else if (selectedImage.value) {

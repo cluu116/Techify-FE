@@ -4,16 +4,23 @@ import api, {generateFormData, resetForm} from "@/services/ApiService.js";
 import {showError, showSuccess} from "@/services/ToastService.js";
 import {useRouter} from "vue-router";
 import {onMounted, ref} from "vue";
+import {validateName} from "@/services/Validators.js";
 
 const toast = useToast();
 const router = useRouter()
 const parentCategories = ref([]);
 onMounted(async () => {
   parentCategories.value = (await api.get("parent_category")).data;
-  console.log(parentCategories.value)
 });
 const add = async () => {
   const formData = generateFormData("form_add")
+  const categoryName = formData.get('name');
+
+  const nameError = validateName(categoryName);
+  if (nameError) {
+    showError(toast, nameError);
+    return;
+  }
   try {
     const res = await api.post("/category", formData);
     if (res.status === 200) {

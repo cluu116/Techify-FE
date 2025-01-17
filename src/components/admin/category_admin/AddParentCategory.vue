@@ -3,6 +3,7 @@ import { ref } from 'vue';
 import { Button, useToast } from "primevue";
 import api, { generateFormData, resetForm } from "@/services/ApiService.js";
 import { showError, showSuccess } from "@/services/ToastService.js";
+import {validateName} from "@/services/Validators.js";
 
 const toast = useToast();
 const selectedImage = ref(null);
@@ -34,6 +35,15 @@ const removeImage = () => {
 
 const add = async () => {
   try {
+    const formData = generateFormData("form_add");
+    const categoryName = formData.get('name');
+
+    const nameError = validateName(categoryName);
+    if (nameError) {
+      showError(toast, nameError);
+      return;
+    }
+
     let imageUrl = null;
     if (selectedImage.value) {
       const imageFormData = new FormData();
@@ -44,7 +54,6 @@ const add = async () => {
       imageUrl = imageResponse.data;
     }
 
-    const formData = generateFormData("form_add");
     if (imageUrl) {
       formData.append('thumbnail', JSON.stringify(imageUrl));
     }

@@ -263,6 +263,15 @@ const total = computed(() => {
 
 const handleCheckout = async () => {
   try {
+    if (user.value.role === 'STAFF' || user.value.role === 'ADMIN') {
+      toast.add({
+        severity: "error",
+        summary: "Không được phép",
+        detail: "Nhân viên và quản trị viên không thể thực hiện chức năng này.",
+        life: 3000,
+      });
+      return;
+    }
     if (!validateCheckoutAddress()) {
       return;
     }

@@ -287,7 +287,7 @@ const visible = ref(false);
                           class="bb-dropdown-menu min-w-[150px] py-[10px] px-[5px] transition-all duration-[0.3s] ease-in-out mt-[25px] absolute z-[16] text-left opacity-[0] right-[auto] bg-[#fff] border-[1px] border-solid border-[#eee] block rounded-[10px]"
                       >
                         <li
-                            v-if="user.role === 'ADMIN'"
+                            v-if="user.role === 'ADMIN' || user.role === 'STAFF'"
                             class="py-[4px] px-[15px] m-[0] font-Poppins text-[15px] text-[#686e7d] font-light leading-[28px] tracking-[0.03rem]"
                         >
                           <router-link

@@ -1,11 +1,18 @@
-<script>
+<template>
+  <div id="fpt-ai-chatbot"></div>
+</template>
+
+<script setup>
+import { onMounted } from 'vue';
+
 // Configs
-let liveChatBaseUrl   = document.location.protocol + '//' + 'livechat.fpt.ai/v36/src'
-let LiveChatSocketUrl = 'livechat.fpt.ai:443'
-let FptAppCode        = '39af529d96038caac4b9418089e0b810'
-let FptAppName        = 'Techify'
+const liveChatBaseUrl = document.location.protocol + '//' + 'livechat.fpt.ai/v36/src';
+const LiveChatSocketUrl = 'livechat.fpt.ai:443';
+const FptAppCode = '39af529d96038caac4b9418089e0b810';
+const FptAppName = 'Techify';
+
 // Define custom styles
-let CustomStyles = {
+const CustomStyles = {
   // header
   headerBackground: 'linear-gradient(86.7deg, #3353a2ff 0.85%, #31b7b7ff 98.94%)',
   headerTextColor: '#ffffffff',
@@ -37,34 +44,37 @@ let CustomStyles = {
   prefixPlaceholder: 'Danh xưng',
   // custom css
   css: ''
-}
-// Get bot code from url if FptAppCode is empty
-if (!FptAppCode) {
-  let appCodeFromHash = window.location.hash.substr(1)
-  if (appCodeFromHash.length === 32) {
-    FptAppCode = appCodeFromHash
-  }
-}
+};
+
 // Set Configs
-let FptLiveChatConfigs = {
+const FptLiveChatConfigs = {
   appName: FptAppName,
   appCode: FptAppCode,
-  themes : '',
-  styles : CustomStyles
-}
-// Append Script
-let FptLiveChatScript  = document.createElement('script')
-FptLiveChatScript.id   = 'fpt_ai_livechat_script'
-FptLiveChatScript.src  = liveChatBaseUrl + '/static/fptai-livechat.js'
-document.body.appendChild(FptLiveChatScript)
-// Append Stylesheet
-let FptLiveChatStyles  = document.createElement('link')
-FptLiveChatStyles.id   = 'fpt_ai_livechat_script'
-FptLiveChatStyles.rel  = 'stylesheet'
-FptLiveChatStyles.href = liveChatBaseUrl + '/static/fptai-livechat.css'
-document.body.appendChild(FptLiveChatStyles)
-// Init
-FptLiveChatScript.onload = function () {
-  fpt_ai_render_chatbox(FptLiveChatConfigs, liveChatBaseUrl, LiveChatSocketUrl)
-}
+  themes: '',
+  styles: CustomStyles
+};
+
+onMounted(() => {
+  // Append Script
+  const FptLiveChatScript = document.createElement('script');
+  FptLiveChatScript.id = 'fpt_ai_livechat_script';
+  FptLiveChatScript.src = liveChatBaseUrl + '/static/fptai-livechat.js';
+  document.body.appendChild(FptLiveChatScript);
+
+  // Append Stylesheet
+  const FptLiveChatStyles = document.createElement('link');
+  FptLiveChatStyles.id = 'fpt_ai_livechat_script';
+  FptLiveChatStyles.rel = 'stylesheet';
+  FptLiveChatStyles.href = liveChatBaseUrl + '/static/fptai-livechat.css';
+  document.body.appendChild(FptLiveChatStyles);
+
+  // Init
+  FptLiveChatScript.onload = function () {
+    window.fpt_ai_render_chatbox(FptLiveChatConfigs, liveChatBaseUrl, LiveChatSocketUrl);
+  };
+});
 </script>
+
+<style scoped>
+/* Thêm styles nếu cần */
+</style>

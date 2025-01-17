@@ -4,6 +4,7 @@ import api from "@/services/ApiService.js";
 import { showError, showSuccess } from "@/services/ToastService.js";
 import { onMounted, ref, computed } from "vue";
 import { categoryStore } from '@/services/categoryStore.js';
+import {validateName} from "@/services/Validators.js";
 
 const toast = useToast();
 const parentCategories = ref([]);
@@ -36,6 +37,12 @@ onMounted(async () => {
 
 const update = async () => {
   try {
+    const nameError = validateName(category.value.name);
+    if (nameError) {
+      showError(toast, nameError);
+      return;
+    }
+
     const formData = new FormData();
     formData.append('name', category.value.name);
     if (selectedParentCategoryId.value) {
